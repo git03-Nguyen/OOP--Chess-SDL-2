@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Resource Files\Pieces">
+      <UniqueIdentifier>{45877f2f-93c9-4ceb-8bb0-fd5d8320e500}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Buttons">
+      <UniqueIdentifier>{44162b30-02d9-4fcb-b580-357076c4b268}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Board.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Pieces.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Board.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Pieces.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Assets\Pieces\BishopBlack.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\BishopWhite.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\KingBlack.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\KingWhite.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\KnightBlack.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\KnightWhite.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\PawnBlack.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\PawnWhite.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\QueenBlack.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\QueenWhite.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\RookBlack.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Pieces\RookWhite.png">
+      <Filter>Resource Files\Pieces</Filter>
+    </Image>
+    <Image Include="..\Assets\Background\background.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\Assets\Buttons\redo.png">
+      <Filter>Resource Files\Buttons</Filter>
+    </Image>
+    <Image Include="..\Assets\Buttons\settings.png">
+      <Filter>Resource Files\Buttons</Filter>
+    </Image>
+    <Image Include="..\Assets\Buttons\undo.png">
+      <Filter>Resource Files\Buttons</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
