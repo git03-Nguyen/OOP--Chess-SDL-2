@@ -8,8 +8,8 @@
 
 class GameManager {
 private:
-	const int BOARD_OFFSET_X = 30, BOARD_OFFSET_Y = 30;
-	int SCREEN_WIDTH, SCREEN_HEIGHT, CELL_SIZE;
+	int BOARD_OFFSET = 30, BOARD_BORDER = 73; // * 1/1000
+	int SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_SIZE, CELL_SIZE;
 
 	// control window
 	SDL_Window* window;

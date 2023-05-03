@@ -15,7 +15,9 @@ GameManager::GameManager(const char* title, int xPos, int yPos, int width, int h
 
 	SCREEN_WIDTH = width;
 	SCREEN_HEIGHT = height;
-	CELL_SIZE = (SCREEN_HEIGHT - BOARD_OFFSET_X * 2) / 8;
+	BOARD_SIZE = SCREEN_HEIGHT - 2 * BOARD_OFFSET;
+	BOARD_BORDER = BOARD_SIZE * BOARD_BORDER / 1000.0;
+	CELL_SIZE = (BOARD_SIZE - 2 * BOARD_BORDER) / 8;
 
 	board = new Board();
 	gui = new GuiManager(window, board);
@@ -91,8 +93,8 @@ void GameManager::handleMouseClick(SDL_Event& e) {
 
 	// Click on board
 	if (gui->isOverBoard(x, y)) {
-		int boardX = (x - BOARD_OFFSET_X) / CELL_SIZE;
-		int boardY = (y - BOARD_OFFSET_Y) / CELL_SIZE;
+		int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+		int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 		handleClickOnBoard(boardX, boardY);
 	}
 
@@ -140,8 +142,8 @@ void GameManager::handleClickOnBoard(int boardX, int boardY) {
 		// Clicking while highlighting
 		case SDL_MOUSEBUTTONDOWN:
 			SDL_GetMouseState(&x, &y);
-			newX = (x - BOARD_OFFSET_X) / CELL_SIZE;
-			newY = (y - BOARD_OFFSET_Y) / CELL_SIZE;
+			newX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+			newY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 
 			if (gui->isOverBoard(x, y)) {
 				// Choose "legal" next move -> return to handleEvent()

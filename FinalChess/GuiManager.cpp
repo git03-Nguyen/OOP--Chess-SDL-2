@@ -8,16 +8,19 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	SDL_GetWindowSize(window, &size.x, &size.y);
 	SCREEN_WIDTH = size.x;
 	SCREEN_HEIGHT = size.y;
-	CELL_SIZE = (SCREEN_HEIGHT - BOARD_OFFSET_X * 2) / 8;
-	SIDEBAR_WIDTH = SCREEN_WIDTH - BOARD_OFFSET_X - CELL_SIZE * 8;
+	BOARD_SIZE = SCREEN_HEIGHT - 2 * BOARD_OFFSET;
+	BOARD_BORDER = BOARD_SIZE * BOARD_BORDER / 1000.0;
+	CELL_SIZE = (BOARD_SIZE - 2 * BOARD_BORDER) / 8;
+	SIDEBAR_WIDTH = SCREEN_WIDTH - BOARD_OFFSET - BOARD_SIZE;
 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	if (renderer) std::cout << "Renderer created!" << std::endl; else throw "Cannot create renderer!";
 
-	background = IMG_LoadTexture(renderer, "../Assets/Background/background.jpg");
-	settingsButton = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
-	undoButton = IMG_LoadTexture(renderer, "../Assets/Buttons/undo.png");
-	redoButton = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
+	bgTexture = IMG_LoadTexture(renderer, "../Assets/Background/background.jpg");
+	boardTexture = IMG_LoadTexture(renderer, "../Assets/Background/brown_board.jpg");
+	settingsTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
+	undoTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/undo.png");
+	redoTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
 
 	for (auto& row : board->piecesOnBoard) {
 		for (auto& piece : row) {
@@ -30,10 +33,11 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 }
 
 GuiManager::~GuiManager() {
-	SDL_DestroyTexture(background);
-	SDL_DestroyTexture(settingsButton);
-	SDL_DestroyTexture(undoButton);
-	SDL_DestroyTexture(redoButton);
+	SDL_DestroyTexture(bgTexture);
+	SDL_DestroyTexture(boardTexture);
+	SDL_DestroyTexture(settingsTexture);
+	SDL_DestroyTexture(undoTexture);
+	SDL_DestroyTexture(redoTexture);
 	SDL_DestroyRenderer(renderer);
 	TTF_Quit();
 	IMG_Quit();
@@ -61,8 +65,8 @@ void GuiManager::render(Color turn) {
 void GuiManager::renderHighLight(Piece* piece) {
 	std::cout << "Hearing next move\n";
 
-	int x = BOARD_OFFSET_X + piece->posX * CELL_SIZE;
-	int y = BOARD_OFFSET_Y + piece->posY * CELL_SIZE;
+	int x = BOARD_OFFSET + BOARD_BORDER + piece->posX * CELL_SIZE;
+	int y = BOARD_OFFSET + BOARD_BORDER + piece->posY * CELL_SIZE;
 	((piece->posX + piece->posY) % 2 == 0) ? 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 204, 10) : SDL_SetRenderDrawColor(renderer, 200, 77, 0, 10);
 	SDL_Rect cellRect = { x, y, CELL_SIZE, CELL_SIZE };
@@ -76,7 +80,8 @@ void GuiManager::renderHighLight(Piece* piece) {
 			int Y = piece->tableMove[i + 1];
 			((X + Y) % 2 == 0) ?
 				SDL_SetRenderDrawColor(renderer, 230, 230, 230, 10) : SDL_SetRenderDrawColor(renderer, 200, 100, 0, 10);
-			SDL_Rect cellRect = { BOARD_OFFSET_X + X * CELL_SIZE, BOARD_OFFSET_Y + Y * CELL_SIZE, CELL_SIZE, CELL_SIZE };
+			SDL_Rect cellRect = { BOARD_OFFSET + BOARD_BORDER + X * CELL_SIZE, 
+									BOARD_OFFSET + BOARD_BORDER + Y * CELL_SIZE, CELL_SIZE, CELL_SIZE };
 			SDL_RenderFillRect(renderer, &cellRect);
 
 			if (board->piecesOnBoard[X][Y]) {
@@ -115,9 +120,9 @@ bool GuiManager::isOverButton(int x, int y) {
 }
 
 bool GuiManager::isOverBoard(int x, int y) {
-	int boardX = (x - BOARD_OFFSET_X) / CELL_SIZE;
-	int boardY = (y - BOARD_OFFSET_Y) / CELL_SIZE;
-	return (x - BOARD_OFFSET_X >= 0 && y - BOARD_OFFSET_Y >= 0
+	int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+	int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+	return (x - BOARD_OFFSET - BOARD_BORDER >= 0 && y - BOARD_OFFSET - BOARD_BORDER >= 0
 		&& boardX >= 0 && boardX <= 7 && boardY >= 0 && boardY <= 7);
 }
 
@@ -137,8 +142,8 @@ void GuiManager::drawPieces() {
 	for (auto& row : board->piecesOnBoard) {
 		for (auto& p : row) {
 			if (p) {
-				int x = BOARD_OFFSET_X + p->posX * CELL_SIZE;
-				int y = BOARD_OFFSET_Y + p->posY * CELL_SIZE;
+				int x = BOARD_OFFSET + BOARD_BORDER + p->posX * CELL_SIZE;
+				int y = BOARD_OFFSET + BOARD_BORDER + p->posY * CELL_SIZE;
 				SDL_Rect pieceRect = { x, y, CELL_SIZE, CELL_SIZE };
 				SDL_RenderCopy(renderer, p->texture, NULL, &pieceRect);
 			}
@@ -147,7 +152,7 @@ void GuiManager::drawPieces() {
 }
 
 void GuiManager::drawButtonMenu() {
-	drawButton(settingsButton, 60, 625, 500);
+	drawButton(settingsTexture, 60, 625, 500);
 }
 
 void GuiManager::drawButton(SDL_Texture* texture, int size, int posX, int posY) {
@@ -181,33 +186,21 @@ void GuiManager::drawCurrentTurn(Color turn) {
 }
 
 void GuiManager::drawBoard() {
-	SDL_Rect boardRect = { BOARD_OFFSET_X, BOARD_OFFSET_Y, CELL_SIZE * 8, CELL_SIZE * 8 };
+	SDL_Rect boardRect = { BOARD_OFFSET, BOARD_OFFSET, BOARD_SIZE, BOARD_SIZE };
 
 	// Draw shadow
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 60);
-	SDL_Rect shadowRect = { boardRect.x + 10, boardRect.y + 10, CELL_SIZE * 8, CELL_SIZE * 8 };
+	SDL_Rect shadowRect = { boardRect.x + 10, boardRect.y + 10, BOARD_SIZE, BOARD_SIZE };
 	SDL_RenderFillRect(renderer, &shadowRect);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 
 	// Draw cells
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			SDL_Rect cellRect = { BOARD_OFFSET_X + j * CELL_SIZE, BOARD_OFFSET_Y + i * CELL_SIZE, CELL_SIZE, CELL_SIZE };
-			if ((i + j) % 2 == 0) {
-				SDL_SetRenderDrawColor(renderer, 255, 230, 204, 255);
-			}
-			else {
-				SDL_SetRenderDrawColor(renderer, 153, 77, 0, 255);
-			}
-			SDL_RenderFillRect(renderer, &cellRect);
-
-		}
-	}
+	SDL_RenderCopy(renderer, boardTexture, NULL, &boardRect);
 	
 }
 
 void GuiManager::drawBackground() {
 	SDL_Rect bgRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-	SDL_RenderCopy(renderer, background, NULL, &bgRect);
+	SDL_RenderCopy(renderer, bgTexture, NULL, &bgRect);
 }
