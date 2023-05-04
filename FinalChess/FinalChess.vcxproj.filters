@@ -103,5 +103,14 @@
     <Image Include="..\Assets\Buttons\undo.png">
       <Filter>Resource Files\Buttons</Filter>
     </Image>
+    <Image Include="..\Assets\Background\brown_board.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\Assets\Buttons\next_move.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\Assets\Buttons\killing_move.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

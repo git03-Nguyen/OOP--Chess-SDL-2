@@ -14,10 +14,10 @@ enum class Button { SETTINGS, UNDO, REDO };
 class GuiManager {
 protected:
 
-	int BOARD_OFFSET = 30, BOARD_BORDER = 73; //%
-	int SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_SIZE, CELL_SIZE;
-
-	int SIDEBAR_WIDTH, BUTTON_SIZE = 60;
+	int BOARD_OFFSET = 29;
+	float BOARD_BORDER = 39.1; //
+	int BUTTON_SIZE = 60;
+	int SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_SIZE, SIDEBAR_WIDTH, CELL_SIZE;
 
 	
 	SDL_Window* window;
@@ -26,9 +26,12 @@ protected:
 	// all GUI objects
 	SDL_Texture* bgTexture; 
 	SDL_Texture* boardTexture;
+	SDL_Texture* nextMoveTexture;
+	SDL_Texture* killingMoveTexture;
 	SDL_Texture* settingsTexture;
 	SDL_Texture* undoTexture;
 	SDL_Texture* redoTexture;
+	
 
 	// Pieces
 	Board* board;

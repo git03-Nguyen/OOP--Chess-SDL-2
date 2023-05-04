@@ -81,6 +81,7 @@ bool Board::movePiece(Piece* piece, int newX, int newY) {
 }
 
 void Board::updateTableMove(Piece* piece) {
+    piece->tableMove.clear();
     if (!piece->isAlive) return;
 
     if (piece->id == PieceID::Pawn) {

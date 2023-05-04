@@ -9,8 +9,7 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	SCREEN_WIDTH = size.x;
 	SCREEN_HEIGHT = size.y;
 	BOARD_SIZE = SCREEN_HEIGHT - 2 * BOARD_OFFSET;
-	BOARD_BORDER = BOARD_SIZE * BOARD_BORDER / 1000.0;
-	CELL_SIZE = (BOARD_SIZE - 2 * BOARD_BORDER) / 8;
+	CELL_SIZE = round((BOARD_SIZE - 2 * BOARD_BORDER) / 8.0);
 	SIDEBAR_WIDTH = SCREEN_WIDTH - BOARD_OFFSET - BOARD_SIZE;
 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -18,6 +17,8 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 
 	bgTexture = IMG_LoadTexture(renderer, "../Assets/Background/background.jpg");
 	boardTexture = IMG_LoadTexture(renderer, "../Assets/Background/brown_board.jpg");
+	nextMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/next_move.png");
+	killingMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/killing_move.png");
 	settingsTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
 	undoTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/undo.png");
 	redoTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
@@ -35,6 +36,7 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 GuiManager::~GuiManager() {
 	SDL_DestroyTexture(bgTexture);
 	SDL_DestroyTexture(boardTexture);
+	SDL_DestroyTexture(nextMoveTexture);
 	SDL_DestroyTexture(settingsTexture);
 	SDL_DestroyTexture(undoTexture);
 	SDL_DestroyTexture(redoTexture);
@@ -67,31 +69,31 @@ void GuiManager::renderHighLight(Piece* piece) {
 
 	int x = BOARD_OFFSET + BOARD_BORDER + piece->posX * CELL_SIZE;
 	int y = BOARD_OFFSET + BOARD_BORDER + piece->posY * CELL_SIZE;
-	((piece->posX + piece->posY) % 2 == 0) ? 
-		SDL_SetRenderDrawColor(renderer, 255, 255, 204, 10) : SDL_SetRenderDrawColor(renderer, 200, 77, 0, 10);
 	SDL_Rect cellRect = { x, y, CELL_SIZE, CELL_SIZE };
-	SDL_RenderFillRect(renderer, &cellRect);
 
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+	SDL_SetTextureAlphaMod(nextMoveTexture, 100);
+	SDL_SetTextureAlphaMod(killingMoveTexture, 80);
+	
+	SDL_SetRenderDrawColor(renderer, 101, 181, 85, 100);
+	SDL_RenderFillRect(renderer, &cellRect);
 	SDL_RenderCopy(renderer, piece->texture, NULL, &cellRect);
 
 	if (piece->tableMove.size() > 0) {
 		for (int i = 0; i < piece->tableMove.size() - 1; i += 2) {
 			int X = piece->tableMove[i];
 			int Y = piece->tableMove[i + 1];
-			((X + Y) % 2 == 0) ?
-				SDL_SetRenderDrawColor(renderer, 230, 230, 230, 10) : SDL_SetRenderDrawColor(renderer, 200, 100, 0, 10);
-			SDL_Rect cellRect = { BOARD_OFFSET + BOARD_BORDER + X * CELL_SIZE, 
-									BOARD_OFFSET + BOARD_BORDER + Y * CELL_SIZE, CELL_SIZE, CELL_SIZE };
-			SDL_RenderFillRect(renderer, &cellRect);
+			SDL_Rect cellRect = { BOARD_OFFSET + BOARD_BORDER + X * CELL_SIZE + CELL_SIZE / 4, 
+									BOARD_OFFSET + BOARD_BORDER + Y * CELL_SIZE + CELL_SIZE / 4,
+									CELL_SIZE / 2, CELL_SIZE / 2 };
 
-			if (board->piecesOnBoard[X][Y]) {
-				SDL_RenderCopy(renderer, board->piecesOnBoard[X][Y]->texture, NULL, &cellRect);
-			}
-
-			/*SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-			SDL_RenderDrawRect(renderer, &cellRect);*/
+			(board->piecesOnBoard[X][Y]) ? 
+				SDL_RenderCopy(renderer, killingMoveTexture, NULL, &cellRect):
+				SDL_RenderCopy(renderer, nextMoveTexture, NULL, &cellRect);
 		}
 	}
+
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 	SDL_RenderPresent(renderer);
 }
 

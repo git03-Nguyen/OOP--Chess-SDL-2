@@ -160,6 +160,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\Assets\Background\background.jpg" />
+    <Image Include="..\Assets\Background\brown_board.jpg" />
+    <Image Include="..\Assets\Buttons\killing_move.png" />
+    <Image Include="..\Assets\Buttons\next_move.png" />
     <Image Include="..\Assets\Buttons\redo.png" />
     <Image Include="..\Assets\Buttons\settings.png" />
     <Image Include="..\Assets\Buttons\undo.png" />

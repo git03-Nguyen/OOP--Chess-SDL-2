@@ -8,7 +8,8 @@
 
 class GameManager {
 private:
-	int BOARD_OFFSET = 30, BOARD_BORDER = 73; // * 1/1000
+	int BOARD_OFFSET = 29;
+	float BOARD_BORDER = 39.1; // 
 	int SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_SIZE, CELL_SIZE;
 
 	// control window

@@ -16,8 +16,7 @@ GameManager::GameManager(const char* title, int xPos, int yPos, int width, int h
 	SCREEN_WIDTH = width;
 	SCREEN_HEIGHT = height;
 	BOARD_SIZE = SCREEN_HEIGHT - 2 * BOARD_OFFSET;
-	BOARD_BORDER = BOARD_SIZE * BOARD_BORDER / 1000.0;
-	CELL_SIZE = (BOARD_SIZE - 2 * BOARD_BORDER) / 8;
+	CELL_SIZE = round((BOARD_SIZE - 2 * BOARD_BORDER) / 8.0);
 
 	board = new Board();
 	gui = new GuiManager(window, board);
