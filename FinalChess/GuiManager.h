@@ -63,12 +63,12 @@ public:
 	GuiManager(SDL_Window* _window, Board* piecesOnBoard);
 	~GuiManager();
 
-	void render(Color turn, Button focusingBtn);
+	void render(Color turn, Piece* clickedPiece, Button focusingBtn);
 	void renderHighLight(Piece* piece);
 	void renderClickBtn(Button btn);
 
 	Button getButton(int x, int y);
-	bool isOverBoard(int x, int y);
+	bool isOnBoard(int x, int y);
 
 };
 

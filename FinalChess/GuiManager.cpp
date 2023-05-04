@@ -49,7 +49,7 @@ GuiManager::~GuiManager() {
 	IMG_Quit();
 }
 
-void GuiManager::render(Color turn, Button focusingBtn) {
+void GuiManager::render(Color turn, Piece* clickedPiece, Button focusingBtn) {
 	SDL_RenderClear(renderer);
 	
 	// Draw background
@@ -65,14 +65,15 @@ void GuiManager::render(Color turn, Button focusingBtn) {
 
 	// Draw pieces
 	drawAllPieces();
+	renderHighLight(clickedPiece);
 
 	SDL_RenderPresent(renderer);
 
-	//std::cout << "Refresh screen" << std::endl;
+	std::cout << "Refresh screen" << std::endl;
 }
 
 void GuiManager::renderHighLight(Piece* piece) {
-	std::cout << "Hearing next move\n";
+	if (!piece) return;
 
 	int x = BOARD_OFFSET + BOARD_BORDER + piece->posX * CELL_SIZE;
 	int y = BOARD_OFFSET + BOARD_BORDER + piece->posY * CELL_SIZE;
@@ -139,7 +140,7 @@ Button GuiManager::getButton(int x, int y) {
 	return Button::NONE;
 }
 
-bool GuiManager::isOverBoard(int x, int y) {
+bool GuiManager::isOnBoard(int x, int y) {
 	int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 	int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 	return (x - BOARD_OFFSET - BOARD_BORDER >= 0 && y - BOARD_OFFSET - BOARD_BORDER >= 0
@@ -190,6 +191,7 @@ void GuiManager::drawButton(SDL_Texture* texture, int size, int posX, int posY) 
 	}
 
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
 }
 
 void GuiManager::drawCurrentTurn(Color turn) {
@@ -200,10 +202,11 @@ void GuiManager::drawCurrentTurn(Color turn) {
 }
 
 void GuiManager::drawButtonFocused(Button focusingBtn) {
-	if (focusingBtn != Button::NONE) {
-		std::cout << "Focusing button " << (int)focusingBtn << std::endl;
-	}
+	if (focusingBtn == Button::NONE) return;
 
+	std::cout << "Focusing button " << (int)focusingBtn << std::endl;
+	SDL_Rect btnRect = { 0,0,BUTTON_SIZE + 5,BUTTON_SIZE + 5 };
+	SDL_RenderCopy(renderer, buttonTexture[(int)focusingBtn], NULL, &btnRect);
 
 }
 

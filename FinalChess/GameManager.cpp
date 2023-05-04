@@ -16,7 +16,7 @@ GameManager::GameManager(const char* title, int xPos, int yPos, int width, int h
 	SCREEN_WIDTH = width;
 	SCREEN_HEIGHT = height;
 	BOARD_SIZE = SCREEN_HEIGHT - 2 * BOARD_OFFSET;
-	CELL_SIZE = round((BOARD_SIZE - 2 * BOARD_BORDER) / 8.0);
+	CELL_SIZE = round((BOARD_SIZE - 2 * BOARD_BORDER) / 8.0f);
 
 	board = new Board();
 	gui = new GuiManager(window, board);
@@ -24,8 +24,9 @@ GameManager::GameManager(const char* title, int xPos, int yPos, int width, int h
 	// flags
 	isRunning = true;
 	currentTurn = Color::White; // white always goes first
-	boardStateChange = true;
 	focusingBtn = Button::NONE;
+	clickedPiece = nullptr;
+	boardStateChange = true;
 
 }
 
@@ -45,12 +46,10 @@ void GameManager::gameLoop(int fps) {
 	while (isRunning) {
 		frameStart = SDL_GetTicks();
 		handleEvent();
-		if (boardStateChange) gui->render(currentTurn, focusingBtn);
+		if (boardStateChange) gui->render(currentTurn, clickedPiece, focusingBtn);
 
-		// set default flags
-		boardStateChange = false;
-		focusingBtn = Button::NONE;
-
+		// set default flags -> when no event is handled -> no change in GUI
+		boardStateChange = false; 
 
 		frameTime = SDL_GetTicks() - frameStart;
 
@@ -63,23 +62,30 @@ void GameManager::gameLoop(int fps) {
 // TODO: try-catch
 void GameManager::handleEvent() {
 	int x, y;
+	Button tempButton;
 	SDL_Event e;
+
 	// 1 loop => perform 1 event
-	while (SDL_PollEvent(&e)) { // => Khac biet giua WaitEvent va PollEvent
+	while (SDL_PollEvent(&e)) { // => Differences between WaitEvent and PollEvent
 		switch (e.type) {
 		case SDL_QUIT:
 			isRunning = false;
 			return;
 
-		// Mouse over buttons -> hearing next move again
+		// Mouse over buttons -> refresh GUI (hover button) -> handleEvent() again
 		case SDL_MOUSEMOTION:
 		SDL_GetMouseState(&x, &y);
-		if ((focusingBtn = gui->getButton(x, y)) != Button::NONE) {
+		tempButton = gui->getButton(x, y);
+		if (focusingBtn != tempButton) {
+			focusingBtn = tempButton;
 			boardStateChange = true;
+		}
+		else {
+			boardStateChange = false;
 		}
 		break;
 
-		case SDL_MOUSEBUTTONDOWN: // Click -> piece / button
+		case SDL_MOUSEBUTTONDOWN: // Click on piece / button
 			boardStateChange = true;
 			handleMouseClick(e);
 			break;
@@ -96,10 +102,10 @@ void GameManager::handleMouseClick(SDL_Event& e) {
 	SDL_GetMouseState(&x, &y);
 
 	// Click on board
-	if (gui->isOverBoard(x, y)) {
+	if (gui->isOnBoard(x, y)) {
 		int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 		int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
-		handleClickOnBoard(boardX, boardY);
+		(clickedPiece) ? handleChoosingMove(boardX, boardY) : handleClickOnBoard(boardX, boardY);
 	}
 
 	// Click on others - i.e: Menu, ...
@@ -110,78 +116,46 @@ void GameManager::handleMouseClick(SDL_Event& e) {
 	// Click on empty space -> return to handleEvent()
 	else {
 		std::cout << "Clicking on empty space: " << x << " " << y << std::endl;
+		boardStateChange = false;
 	}
 
 }
 
 void GameManager::handleClickOnBoard(int boardX, int boardY) {
-	Piece* clickedPiece = board->piecesOnBoard[boardX][boardY];
+	clickedPiece = board->piecesOnBoard[boardX][boardY];
 	if (!clickedPiece || clickedPiece->color != currentTurn) {
-		std::cout << "Click on no valid piece" << boardX << boardY << std::endl;
-		return;
+		std::cout << "Click on invalid piece " << boardX << " " << boardY << std::endl;
+		clickedPiece = nullptr;
 	}
+	else {
+		// If click to a piece -> go to choosing next move
+		std::cout << "Click on " << clickedPiece->imagePath << " " << boardX << " " << boardY << std::endl;
+	}
+}
 
-	// If click to a piece -> go to choosing next move
-	std::cout << "Click on " << clickedPiece->imagePath << " " << boardX << " " << boardY << std::endl;
-	gui->renderHighLight(clickedPiece);
-
-	// Hearing for next move - while processing other events (quit, menu, ...) 
-	SDL_Event e;
-	int x, y, newX, newY;
-	while (SDL_WaitEvent(&e)) {
-		switch (e.type) {
-		case SDL_QUIT:
-			isRunning = false;
-			return;
-
-		// Mouse over buttons -> hearing next move again
-		case SDL_MOUSEMOTION:
-			SDL_GetMouseState(&x, &y);
-			if ((focusingBtn = gui->getButton(x,y)) != Button::NONE) {
-				boardStateChange = true;
-			}
-			break;
-
-		// Clicking while highlighting
-		case SDL_MOUSEBUTTONDOWN:
-			SDL_GetMouseState(&x, &y);
-			newX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
-			newY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
-
-			if (gui->isOverBoard(x, y)) {
-				// If choose "legal" next move -> move -> return to handleEvent() -> other turn
-				if (clickedPiece->isLegalMove(newX, newY)) {
-					if (board->movePiece(clickedPiece, newX, newY)) {
-						std::cout << "Moved to " << newX << " " << newY << std::endl;
-						changeTurn();
-					}
-				}
-				// If choose "illegal" next move -> return to handleEvent() -> pick piece again
-				else {
-					std::cout << "Illegal move! " << newX << " " << newY << std::endl;
-				}
-				return;
-			}
-			// Choose menu -> go to menu -> return to hear for next move
-			else if ((focusingBtn = gui->getButton(x, y)) != Button::NONE) {
-				handleClickButton(focusingBtn);
-			}
-			// Choose blank space -> return to hear for next move
-			else {
-				std::cout << "Clicking on empty space: " << x << " " << y << std::endl;
-			}
-
+void GameManager::handleChoosingMove(int newX, int newY) {
+	// If choose "legal" next move -> move -> return to handleEvent() -> other turn
+	if (clickedPiece->isLegalMove(newX, newY)) {
+		if (board->movePiece(clickedPiece, newX, newY)) {
+			std::cout << "Moved to " << newX << " " << newY << std::endl;
+			clickedPiece = nullptr;
+			changeTurn();
 		}
-		
 	}
+	// If choose "illegal" next move -> return to handleEvent() -> pick piece again
+	else {
+		std::cout << "Illegal move! " << newX << " " << newY << std::endl;
+		clickedPiece = nullptr;
+	}
+
 }
 
 void GameManager::handleClickButton(Button clickedBtn) {
 	// Open menu
 	gui->renderClickBtn(clickedBtn);
-	SDL_Delay(2000);
 
 	// Hearing events in menu...
+	SDL_Delay(2000);
 
 }
 
