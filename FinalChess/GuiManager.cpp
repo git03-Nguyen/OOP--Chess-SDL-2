@@ -17,11 +17,13 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 
 	bgTexture = IMG_LoadTexture(renderer, "../Assets/Background/background.jpg");
 	boardTexture = IMG_LoadTexture(renderer, "../Assets/Background/brown_board.jpg");
+	blackTurnTexture = IMG_LoadTexture(renderer, "../Assets/Background/black_move.png");
+	whiteTurnTexture = IMG_LoadTexture(renderer, "../Assets/Background/white_move.png");
 	nextMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/next_move.png");
 	killingMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/killing_move.png");
-	settingsTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
-	undoTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/undo.png");
-	redoTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
+	buttonTexture[(int)Button::SETTINGS] = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
+	buttonTexture[(int)Button::UNDO] = IMG_LoadTexture(renderer, "../Assets/Buttons/undo.png");
+	buttonTexture[(int)Button::REDO] = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
 
 	for (auto& row : board->piecesOnBoard) {
 		for (auto& piece : row) {
@@ -36,28 +38,33 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 GuiManager::~GuiManager() {
 	SDL_DestroyTexture(bgTexture);
 	SDL_DestroyTexture(boardTexture);
+	SDL_DestroyTexture(blackTurnTexture);
+	SDL_DestroyTexture(whiteTurnTexture);
 	SDL_DestroyTexture(nextMoveTexture);
-	SDL_DestroyTexture(settingsTexture);
-	SDL_DestroyTexture(undoTexture);
-	SDL_DestroyTexture(redoTexture);
+	for (auto& texture : buttonTexture) {
+		SDL_DestroyTexture(texture);
+	}
 	SDL_DestroyRenderer(renderer);
 	TTF_Quit();
 	IMG_Quit();
 }
 
-void GuiManager::render(Color turn) {
+void GuiManager::render(Color turn, Button focusingBtn) {
 	SDL_RenderClear(renderer);
 	
 	// Draw background
 	drawBackground();
+
 	// Draw board
 	drawBoard();
+	
 	// Draw other things (menu, buttons, ...)
-	drawButtonMenu();
+	drawButtons();
 	drawCurrentTurn(turn);
+	drawButtonFocused(focusingBtn);
 
 	// Draw pieces
-	drawPieces();
+	drawAllPieces();
 
 	SDL_RenderPresent(renderer);
 
@@ -98,6 +105,7 @@ void GuiManager::renderHighLight(Piece* piece) {
 }
 
 void GuiManager::renderClickBtn(Button btn) {
+	std::cout << "Clicked on button " << (int)btn << std::endl;
 	SDL_Rect btnRect;
 
 	switch (btn) {
@@ -107,18 +115,28 @@ void GuiManager::renderClickBtn(Button btn) {
 	}
 }
 
-bool GuiManager::isOverButton(int x, int y) {
+Button GuiManager::getButton(int x, int y) {
+	SDL_Rect btnRect;
+
 	// BtnSettings
-	SDL_Rect btnRect = { 625, 500, 60, 60 };
+	btnRect = { SETTING_POS_X, SETTING_POS_Y, BUTTON_SIZE, BUTTON_SIZE };
 	if (x > btnRect.x && x < btnRect.x + btnRect.w
 		&& y > btnRect.y && y < btnRect.y + btnRect.h)
-		return true;
+		return Button::SETTINGS;
 
 	// BtnUndo
+	btnRect = { UNDO_POS_X, UNDO_POS_Y, BUTTON_SIZE, BUTTON_SIZE };
+	if (x > btnRect.x && x < btnRect.x + btnRect.w
+		&& y > btnRect.y && y < btnRect.y + btnRect.h)
+		return Button::UNDO;
 
 	// BtnRedo
+	btnRect = { REDO_POS_X, REDO_POS_Y, BUTTON_SIZE, BUTTON_SIZE };
+	if (x > btnRect.x && x < btnRect.x + btnRect.w
+		&& y > btnRect.y && y < btnRect.y + btnRect.h)
+		return Button::REDO;
 
-	return false;
+	return Button::NONE;
 }
 
 bool GuiManager::isOverBoard(int x, int y) {
@@ -128,19 +146,7 @@ bool GuiManager::isOverBoard(int x, int y) {
 		&& boardX >= 0 && boardX <= 7 && boardY >= 0 && boardY <= 7);
 }
 
-Button GuiManager::getButton(int x, int y) {
-	// BtnSettings
-	SDL_Rect btnRect = { 625,500,60, 60 };
-	if (x > btnRect.x && x < btnRect.x + btnRect.w
-		&& y > btnRect.y && y < btnRect.y + btnRect.h)
-		return Button::SETTINGS;
-
-	// BtnUndo
-
-	// BtnRedo
-}
-
-void GuiManager::drawPieces() {
+void GuiManager::drawAllPieces() {
 	for (auto& row : board->piecesOnBoard) {
 		for (auto& p : row) {
 			if (p) {
@@ -153,8 +159,11 @@ void GuiManager::drawPieces() {
 	}
 }
 
-void GuiManager::drawButtonMenu() {
-	drawButton(settingsTexture, 60, 625, 500);
+void GuiManager::drawButtons() {
+	drawButton(buttonTexture[(int)Button::SETTINGS], BUTTON_SIZE, SETTING_POS_X, SETTING_POS_Y);
+	drawButton(buttonTexture[(int)Button::UNDO], BUTTON_SIZE, UNDO_POS_X, UNDO_POS_Y);
+	drawButton(buttonTexture[(int)Button::REDO], BUTTON_SIZE, REDO_POS_X, REDO_POS_Y);
+
 }
 
 void GuiManager::drawButton(SDL_Texture* texture, int size, int posX, int posY) {
@@ -184,6 +193,17 @@ void GuiManager::drawButton(SDL_Texture* texture, int size, int posX, int posY) 
 }
 
 void GuiManager::drawCurrentTurn(Color turn) {
+	SDL_Rect turnRect = { TURN_POS_X, TURN_POS_Y, TURN_WIDTH, TURN_HEIGHT };
+	(turn == Color::White) ?
+		SDL_RenderCopy(renderer, whiteTurnTexture, NULL, &turnRect) :
+		SDL_RenderCopy(renderer, blackTurnTexture, NULL, &turnRect);
+}
+
+void GuiManager::drawButtonFocused(Button focusingBtn) {
+	if (focusingBtn != Button::NONE) {
+		std::cout << "Focusing button " << (int)focusingBtn << std::endl;
+	}
+
 
 }
 

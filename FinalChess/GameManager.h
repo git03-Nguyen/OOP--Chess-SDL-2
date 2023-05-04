@@ -8,8 +8,6 @@
 
 class GameManager {
 private:
-	int BOARD_OFFSET = 29;
-	float BOARD_BORDER = 39.1; // 
 	int SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_SIZE, CELL_SIZE;
 
 	// control window
@@ -24,6 +22,7 @@ private:
 	// flags
 	bool isRunning;
 	Color currentTurn;
+	Button focusingBtn;
 	bool boardStateChange;
 
 	// uitilities
@@ -39,7 +38,7 @@ public:
 	void handleEvent();
 	void handleMouseClick(SDL_Event& e);
 	void handleClickOnBoard(int boardX, int boardY);
-	void handleClickButton(int x, int y);
+	void handleClickButton(Button clickedBtn);
 
 	
 };

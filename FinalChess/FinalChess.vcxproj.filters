@@ -112,5 +112,14 @@
     <Image Include="..\Assets\Buttons\killing_move.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="..\Assets\Background\hanging_sign.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\Assets\Background\king_black.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\Assets\Background\king_white.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
