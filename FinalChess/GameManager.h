@@ -22,7 +22,7 @@ private:
 	// flags
 	bool isRunning;
 	Color currentTurn;
-	Button focusingBtn;
+	Button* focusingBtn;
 	Piece* clickedPiece;
 	bool boardStateChange;
 
@@ -40,7 +40,7 @@ public:
 	void handleMouseClick(SDL_Event& e);
 	void handleClickOnBoard(int boardX, int boardY);
 	void handleChoosingMove(int newX, int newY);
-	void handleClickButton(Button clickedBtn);
+	void handleClickButton(Button* clickedBtn);
 
 	
 };

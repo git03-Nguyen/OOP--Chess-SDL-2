@@ -24,9 +24,11 @@ GameManager::GameManager(const char* title, int xPos, int yPos, int width, int h
 	// flags
 	isRunning = true;
 	currentTurn = Color::White; // white always goes first
-	focusingBtn = Button::NONE;
+	focusingBtn = nullptr;
 	clickedPiece = nullptr;
 	boardStateChange = true;
+
+	gui->render(currentTurn, clickedPiece, focusingBtn);
 
 }
 
@@ -62,7 +64,7 @@ void GameManager::gameLoop(int fps) {
 // TODO: try-catch
 void GameManager::handleEvent() {
 	int x, y;
-	Button tempButton;
+	Button* tempButton;
 	SDL_Event e;
 
 	// 1 loop => perform 1 event
@@ -109,7 +111,7 @@ void GameManager::handleMouseClick(SDL_Event& e) {
 	}
 
 	// Click on others - i.e: Menu, ...
-	else if ((focusingBtn = gui->getButton(x, y)) != Button::NONE) {
+	else if (((focusingBtn = gui->getButton(x, y)))->type != ButtonType::NONE) {
 			handleClickButton(focusingBtn);
 	}
 	
@@ -150,7 +152,7 @@ void GameManager::handleChoosingMove(int newX, int newY) {
 
 }
 
-void GameManager::handleClickButton(Button clickedBtn) {
+void GameManager::handleClickButton(Button* clickedBtn) {
 	// Open menu
 	gui->renderClickBtn(clickedBtn);
 
