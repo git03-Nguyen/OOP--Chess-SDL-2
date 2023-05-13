@@ -111,7 +111,7 @@ void GameManager::handleMouseClick(SDL_Event& e) {
 	}
 
 	// Click on others - i.e: Menu, ...
-	else if (((focusingBtn = gui->getButton(x, y)))->type != ButtonType::NONE) {
+	else if (((focusingBtn = gui->getButton(x, y)))) {
 			handleClickButton(focusingBtn);
 	}
 	
@@ -154,10 +154,11 @@ void GameManager::handleChoosingMove(int newX, int newY) {
 
 void GameManager::handleClickButton(Button* clickedBtn) {
 	// Open menu
+	if (!clickedBtn) return;
 	gui->renderClickBtn(clickedBtn);
 
 	// Hearing events in menu...
-	SDL_Delay(2000);
+	SDL_Delay(100);
 
 }
 

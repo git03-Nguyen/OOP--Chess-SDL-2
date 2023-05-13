@@ -112,6 +112,7 @@ void GuiManager::renderHighLight(Piece* piece) {
 }
 
 void GuiManager::renderClickBtn(Button* button) {
+	if (!button) return;
 	std::cout << "Clicked on button " << *button << std::endl;
 	SDL_Rect btnRect;
 
