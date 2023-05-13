@@ -26,6 +26,11 @@ bool Piece::isLegalMove(int newX, int newY) {
 	return false;
 }
 
+void Piece::addMove(int x, int y) {
+	tableMove.push_back(x);
+	tableMove.push_back(y);
+}
+
 void Piece::setDead() {
 	isAlive = false;
 	tableMove.clear();
@@ -41,6 +46,11 @@ Rook::Rook(int _posX, int _posY, Color _color): Piece(_posX, _posY, _color) {
 Rook::~Rook() {
 }
 
+void Rook::updateTableMove() {
+	tableMove.clear();
+	if (!isAlive) return;
+}
+
 
 // ----------------------------------
 Knight::Knight(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color) {
@@ -49,6 +59,11 @@ Knight::Knight(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color)
 }
 
 Knight::~Knight() {
+}
+
+void Knight::updateTableMove() {
+	tableMove.clear();
+	if (!isAlive) return;
 }
 
 
@@ -61,6 +76,11 @@ Bishop::Bishop(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color)
 Bishop::~Bishop() {
 }
 
+void Bishop::updateTableMove() {
+	tableMove.clear();
+	if (!isAlive) return;
+}
+
 
 // -------------------------------------
 Queen::Queen(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color) {
@@ -69,6 +89,11 @@ Queen::Queen(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color) {
 }
 
 Queen::~Queen() {
+}
+
+void Queen::updateTableMove() {
+	tableMove.clear();
+	if (!isAlive) return;
 }
 
 
@@ -81,6 +106,11 @@ King::King(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color) {
 King::~King() {
 }
 
+void King::updateTableMove() {
+	tableMove.clear();
+	if (!isAlive) return;
+}
+
 
 // --------------------------------------
 Pawn::Pawn(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color) {
@@ -89,6 +119,12 @@ Pawn::Pawn(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color) {
 }
 
 Pawn::~Pawn() {
+
+}
+
+void Pawn::updateTableMove() {
+	tableMove.clear();
+	if (!isAlive) return;
 
 }
 
