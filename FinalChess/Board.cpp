@@ -65,26 +65,34 @@ Board::~Board() {
 }
 
 bool Board::movePiece(Piece* piece, int newX, int newY) {
-    if (piece->posX == newX && piece->posY == newY) return false;
-    if (Piece* desPiece = piecesOnBoard[newX][newY]) {
-        desPiece->setDead();
-        std::cout << desPiece->imagePath << " is dead!" << std::endl;
-    }
-    piecesOnBoard[piece->posX][piece->posY] = nullptr;
-    piece->posX = newX;
-    piece->posY = newY;
-    piecesOnBoard[piece->posX][piece->posY] = piece;
-    // If Rook/King => lose Castling
-    // If Pawn => 
+    
+    if (!piece->move(piecesOnBoard, newX, newY)) return false;
+    
+    // If pawn -> check promotion
+
     for (auto& p : allPieces) {
-        updateTableMove(p);
+        p->updateTableMove(piecesOnBoard);
     }
+    piece->updateTableMove(piecesOnBoard);
+    // UPdate table move for 2 kings (cuz king must know enemies' attack range before moving)
+    for (auto& p : allPieces) {
+        if (p->id == PieceID::King) {
+            King* king = (King*)p;
+            if (king->isChecked(piecesOnBoard)) {
+                (king->color == Color::White)? cout << "WHITE in CHECK!" << endl :
+                                                cout << "BLACK in CHECK!" << endl;
+            }
+            king->updateTableMove(piecesOnBoard);
+        }
+    }
+
+    
+
     return true;
 }
 
 void Board::updateTableMove(Piece* piece) {
-    piece->tableMove.clear();
-    if (!piece->isAlive) return;
+    
     
     piece->updateTableMove(this->piecesOnBoard);
 

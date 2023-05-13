@@ -34,6 +34,7 @@ public:
 	void setDead();
 
 	virtual void updateTableMove(const vector<vector<Piece*>>& piecesOnBoard) = 0;
+	virtual bool move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY);
 
 
 };
@@ -41,9 +42,11 @@ public:
 // ---------------------------------
 class Rook : public Piece {
 public:
+	bool canCastling = true;
 	Rook(int _posX, int _posY, Color _color);
 	~Rook();
 	void updateTableMove(const vector<vector<Piece*>>& piecesOnBoard);
+	bool move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY);
 };
 
 // ---------------------------------
@@ -60,7 +63,6 @@ public:
 	Bishop(int _posX, int _posY, Color _color);
 	~Bishop();
 	void updateTableMove(const vector<vector<Piece*>>& piecesOnBoard);
-
 	
 };
 
@@ -70,23 +72,25 @@ public:
 	Queen(int _posX, int _posY, Color _color);
 	~Queen();
 	void updateTableMove(const vector<vector<Piece*>>& piecesOnBoard);
-
 };
 
 // ---------------------------------
 class King : public Piece {
 public:
+	bool canCastling = true;
 	King(int _posX, int _posY, Color _color);
 	~King();
 	void updateTableMove(const vector<vector<Piece*>>& piecesOnBoard);
-
+	bool move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY);
+	bool isChecked(vector<vector<Piece*>>& piecesOnBoard) const;
 };
 
 // ---------------------------------
 class Pawn : public Piece {
 public:
+	bool canFirstMove = true;
 	Pawn(int _posX, int _posY, Color _color);
 	~Pawn();
-	void updateTableMove(const vector<vector<Piece*>>& piecesOnBoard);
-
+	void updateTableMove(const vector<vector<Piece*>>& piecesOnBoard) override;
+	bool move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY);
 };
