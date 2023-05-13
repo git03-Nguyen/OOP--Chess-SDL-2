@@ -85,63 +85,8 @@ bool Board::movePiece(Piece* piece, int newX, int newY) {
 void Board::updateTableMove(Piece* piece) {
     piece->tableMove.clear();
     if (!piece->isAlive) return;
-    int x, y, i, j;
-    int s[] = { 1, 1, -1, -1, 1 , 0, 0};
-
-    if (piece->id == PieceID::Pawn) {
-        for (int x = 0; x < 8; x++) {
-            for (int y = 0; y < 8; y++) {
-                Piece* destPiece = piecesOnBoard[x][y];
-                // Test
-                if (!destPiece || destPiece->color != piece->color) {
-                    piece->tableMove.push_back(x);
-                    piece->tableMove.push_back(y);
-                }
-            }
-        }
-    }
-
-    if (piece->id == PieceID::Bishop) { 
-        i = 0; j = 1;
-        for (int count = 0; count < 4; count++) {
-            x = piece->posX; y = piece->posY;
-            x += s[i]; y += s[i] * s[j];
-            while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
-                piece->addMove(x, y);
-                x += s[i]; y += s[i] * s[j];
-            }
-            if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != piece->color) {
-                piece->addMove(x, y);
-            }
-            i++; j++;
-        }
-    }
-
-    if (piece->id == PieceID::Rook) {
-        i = 3; j = 6;
-        for (int count = 0; count < 4; count++) {
-            x = piece->posX; y = piece->posY;
-            x += s[i]; y += s[j];
-            while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
-                piece->addMove(x, y);
-                x += s[i]; y += s[j];
-            }
-            if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != piece->color) {
-                piece->addMove(x, y);
-            }
-            i++; j--;
-        }
-    }
-
-    if (piece->id == PieceID::Queen) {
-        // updateMove() of Bishop
-        // updateMove() of Rook
-
-    }
-
-    if (piece->id == PieceID::Knight) {
-
-    }
+    
+    piece->updateTableMove(this->piecesOnBoard);
 
     // Check / Checkmate
 }

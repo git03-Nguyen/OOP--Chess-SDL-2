@@ -46,9 +46,22 @@ Rook::Rook(int _posX, int _posY, Color _color): Piece(_posX, _posY, _color) {
 Rook::~Rook() {
 }
 
-void Rook::updateTableMove() {
-	tableMove.clear();
-	if (!isAlive) return;
+void Rook::updateTableMove(const vector<vector<Piece*>>& piecesOnBoard) {
+	int x, y, i = 0, j = 3;
+	int s[] = { -1, 1 , 0, 0 };
+	for (int count = 0; count < 4; count++) {
+		x = this->posX; y = this->posY;
+		x += s[i]; y += s[j];
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
+			this->addMove(x, y);
+			x += s[i]; y += s[j];
+		}
+		if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != this->color) {
+			this->addMove(x, y);
+		}
+		i++; j--;
+	}
+	// lost castling -> King
 }
 
 
@@ -61,9 +74,18 @@ Knight::Knight(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color)
 Knight::~Knight() {
 }
 
-void Knight::updateTableMove() {
-	tableMove.clear();
-	if (!isAlive) return;
+void Knight::updateTableMove(const vector<vector<Piece*>>& piecesOnBoard) {
+	int x, y, i = 0, j = 7;
+	int s[] = { 1, 1, -1, -1, 2, -2, 2, -2 };
+	for (int count = 0; count < 8; count++) {
+		x = this->posX; y = this->posY;
+		x += s[i]; y += s[j];
+		if (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color)) {
+			this->addMove(x, y);
+			x += s[i]; y += s[j];
+		}
+		i++; j--;
+	}
 }
 
 
@@ -76,9 +98,21 @@ Bishop::Bishop(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color)
 Bishop::~Bishop() {
 }
 
-void Bishop::updateTableMove() {
-	tableMove.clear();
-	if (!isAlive) return;
+void Bishop::updateTableMove(const vector<vector<Piece*>>& piecesOnBoard) {
+	int x, y, i = 0, j = 1;
+	int s[] = { 1, 1, -1, -1, 1 };
+	for (int count = 0; count < 4; count++) {
+		x = this->posX; y = this->posY;
+		x += s[i]; y += s[i] * s[j];
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
+			this->addMove(x, y);
+			x += s[i]; y += s[i] * s[j];
+		}
+		if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != this->color) {
+			this->addMove(x, y);
+		}
+		i++; j++;
+	}
 }
 
 
@@ -91,9 +125,38 @@ Queen::Queen(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color) {
 Queen::~Queen() {
 }
 
-void Queen::updateTableMove() {
-	tableMove.clear();
-	if (!isAlive) return;
+void Queen::updateTableMove(const vector<vector<Piece*>>& piecesOnBoard) {
+
+	// updateTableMove of Bishop & Rook
+	int x, y, i = 0, j = 1;
+	int s[] = { 1, 1, -1, -1, 1 , 0, 0 };
+	for (int count = 0; count < 4; count++) {
+		x = this->posX; y = this->posY;
+		x += s[i]; y += s[i] * s[j];
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
+			this->addMove(x, y);
+			x += s[i]; y += s[i] * s[j];
+		}
+		if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != this->color) {
+			this->addMove(x, y);
+		}
+		i++; j++;
+	}
+	i = 3; j = 6;
+	for (int count = 0; count < 4; count++) {
+		x = this->posX; y = this->posY;
+		x += s[i]; y += s[j];
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
+			this->addMove(x, y);
+			x += s[i]; y += s[j];
+		}
+		if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != this->color) {
+			this->addMove(x, y);
+		}
+		i++; j--;
+	}
+	
+
 }
 
 
@@ -106,7 +169,7 @@ King::King(int _posX, int _posY, Color _color) : Piece(_posX, _posY, _color) {
 King::~King() {
 }
 
-void King::updateTableMove() {
+void King::updateTableMove(const vector<vector<Piece*>>& piecesOnBoard) {
 	tableMove.clear();
 	if (!isAlive) return;
 }
@@ -122,10 +185,19 @@ Pawn::~Pawn() {
 
 }
 
-void Pawn::updateTableMove() {
+void Pawn::updateTableMove(const vector<vector<Piece*>>& piecesOnBoard) {
 	tableMove.clear();
 	if (!isAlive) return;
-
+	for (int x = 0; x < 8; x++) {
+		for (int y = 0; y < 8; y++) {
+			Piece* destPiece = piecesOnBoard[x][y];
+			// Test
+			if (!destPiece || destPiece->color != this->color) {
+				this->tableMove.push_back(x);
+				this->tableMove.push_back(y);
+			}
+		}
+	}
 }
 
 
