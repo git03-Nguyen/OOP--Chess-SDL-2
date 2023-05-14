@@ -382,14 +382,18 @@ void Pawn::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	// Go straight up - white ;;;; Go straight down - black
 	int x = posX, y = posY;
 	(color == Color::White) ? y -= 1 : y += 1;
-	if (y >= 0 && y < 8 && !piecesOnBoard[x][y]) {
+	if (y >= 0 && y < 8 && !piecesOnBoard[x][y]
+		&& (isCheckingChecked || !thisMoveCanMakeChecked(piecesOnBoard, x, y))) {
+			// If moving to this move leading in checked => cancel this move
 		this->addMove(x, y);
 	}
 	
 	// First move
 	if (canFirstMove && !piecesOnBoard[x][y]) {
 		(color == Color::White) ? y -= 1 : y += 1;
-		if (y >= 0 && y < 8 && !piecesOnBoard[x][y]) {
+		if (y >= 0 && y < 8 && !piecesOnBoard[x][y]
+			&& (isCheckingChecked || !thisMoveCanMakeChecked(piecesOnBoard, x, y))) {
+			// If moving to this move leading in checked => cancel this move
 			this->addMove(x, y);
 		}
 	}
@@ -400,7 +404,11 @@ void Pawn::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	for (int i = -1; i <= 2; i += 3) {
 		x += i;
 		if (x >= 0 && x < 8 && y >= 0 && y < 8 && piecesOnBoard[x][y] && piecesOnBoard[x][y]->color != color) {
-			addMove(x, y);
+			if (!isCheckingChecked && thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
+				// If moving to this move leading in checked => cancel this mov
+				continue;
+			}
+			this->addMove(x, y);
 		}
 	}
 
