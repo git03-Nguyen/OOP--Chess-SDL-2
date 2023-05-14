@@ -49,13 +49,21 @@ bool Piece::thisMoveCanMakeChecked(vector<vector<Piece*>>& piecesOnBoard, int ne
 
 	// Save the old things
 	Piece* dest = piecesOnBoard[newX][newY];
+	int oldX = posX, oldY = posY;
 	
 	// Try the move
+	if (dest) dest->isAlive = false;
+	piecesOnBoard[posX][posY] = nullptr;
 	piecesOnBoard[newX][newY] = this;
+
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			if (piecesOnBoard[i][j] && piecesOnBoard[i][j]->color != color)
+			if (piecesOnBoard[i][j] && piecesOnBoard[i][j]->color != color) {
+				if (piecesOnBoard[i][j]->id == PieceID::Queen) {
+					cout << endl;
+				}
 				piecesOnBoard[i][j]->updateTableMove(piecesOnBoard);
+			}
 		}
 	}
 
@@ -68,6 +76,7 @@ bool Piece::thisMoveCanMakeChecked(vector<vector<Piece*>>& piecesOnBoard, int ne
 
 	// UNDO things
 	piecesOnBoard[newX][newY] = dest;
+	if (dest) dest->isAlive = true;
 	piecesOnBoard[posX][posY] = this;
 
 	for (int i = 0; i < 8; i++) {
@@ -116,10 +125,9 @@ void Rook::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	int x, y, i = 0, j = 3;
 	int s[] = { -1, 1 , 0, 0 };
 	for (int count = 0; count < 4; count++, i++, j--) {
-		x = this->posX; y = this->posY;
-		x += s[i]; y += s[j];
+		x = this->posX + s[i]; y = this->posY + s[j];
 
-		while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color)) {
 			if (!isCheckingChecked) {
 				isCheckingChecked = true;
 				if (thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
@@ -130,11 +138,12 @@ void Rook::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 				}
 				isCheckingChecked = false;
 			}
+			if (piecesOnBoard[x][y]) {
+				if (piecesOnBoard[x][y]->color != color) this->addMove(x, y);
+				break; // This direction is blocked by an ally or an enemy
+			}
 			this->addMove(x, y);
 			x += s[i]; y += s[j];
-		}
-		if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != this->color) {
-			this->addMove(x, y);
 		}
 	}
 }
@@ -215,27 +224,30 @@ void Queen::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	int x, y, i = 0, j = 1;
 	int s[] = { 1, 1, -1, -1, 1 , 0, 0 };
 	for (int count = 0; count < 4; count++) {
-		x = this->posX; y = this->posY;
-		x += s[i]; y += s[i] * s[j];
-		while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
+		x = this->posX + s[i]; y = this->posY + s[i] * s[j];
+
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color)) {
+			if (piecesOnBoard[x][y]) {
+				if (piecesOnBoard[x][y]->color != color) this->addMove(x, y);
+				break; // This direction has been blocked
+			}
 			this->addMove(x, y);
 			x += s[i]; y += s[i] * s[j];
 		}
-		if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != this->color) {
-			this->addMove(x, y);
-		}
+
 		i++; j++;
 	}
 	i = 3; j = 6;
 	for (int count = 0; count < 4; count++) {
-		x = this->posX; y = this->posY;
-		x += s[i]; y += s[j];
-		while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
+		x = this->posX + s[i]; y = this->posY + s[j];
+
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color)) {
+			if (piecesOnBoard[x][y]) {
+				if (piecesOnBoard[x][y]->color != color) this->addMove(x, y);
+				break; // This direction has been blocked
+			}
 			this->addMove(x, y);
 			x += s[i]; y += s[j];
-		}
-		if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != this->color) {
-			this->addMove(x, y);
 		}
 		i++; j--;
 	}
