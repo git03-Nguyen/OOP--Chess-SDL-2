@@ -21,16 +21,18 @@ public:
 	SDL_Texture* texture;
 	bool isAlive;
 	std::vector<int> tableMove;
+	Piece* myKing;
 
 
-//public:
 	Piece(int _posX, int _posY, Color _color);
 	virtual ~Piece();
 
 	void setTexture(SDL_Renderer* renderer);
+	void setKing(Piece* myKing);
 
 	bool isLegalMove(int newX, int newY);
 	void addMove(int x, int y);
+	bool isBeingAttacked(const vector<vector<Piece*>>& piecesOnBoard, Color allyColor, int targetX = -5, int targetY = -5) const;
 
 	bool thisMoveCanMakeChecked(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY);
 
@@ -87,7 +89,7 @@ public:
 	~King();
 	void updateTableMove(vector<vector<Piece*>>& piecesOnBoard) override;
 	bool move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY) override;
-	bool isChecked(vector<vector<Piece*>>& piecesOnBoard, int x = -1, int y = -1) const;
+	void addCastlingMove(vector<vector<Piece*>>& piecesOnBoard);
 };
 
 // ---------------------------------

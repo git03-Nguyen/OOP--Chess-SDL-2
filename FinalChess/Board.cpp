@@ -19,7 +19,11 @@ void Board::setStartBoard() {
         }
     }
 
+    bKing = piecesOnBoard[4][0];
+    wKing = piecesOnBoard[4][7];
+
     for (auto& p : allPieces) {
+        (p->color == Color::White) ? p->setKing(wKing) : p->setKing(bKing);
         p->updateTableMove(piecesOnBoard);
     }
 }
@@ -75,17 +79,15 @@ bool Board::movePiece(Piece* piece, int newX, int newY) {
     }
 
     // UPdate table move for 2 kings (cuz king must know enemies' attack range before moving)
-    for (auto& p : allPieces) {
-        if (p->id == PieceID::King) {
-            King* king = (King*)p;
-            if (king->isChecked(piecesOnBoard)) {
-                (king->color == Color::White)? cout << "WHITE in CHECK!" << endl :
-                                                cout << "BLACK in CHECK!" << endl;
-            }
-            king->updateTableMove(piecesOnBoard);
-        }
+    if (bKing->isBeingAttacked(piecesOnBoard, bKing->color)) {
+            cout << "BLACK in CHECK!" << endl;
     }
+    bKing->updateTableMove(piecesOnBoard);
 
+    if (wKing->isBeingAttacked(piecesOnBoard, wKing->color)) {
+        cout << "BLACK in CHECK!" << endl;
+    }
+    wKing->updateTableMove(piecesOnBoard);
     
 
     return true;

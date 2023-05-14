@@ -7,6 +7,8 @@
 
 class Board {
 private:
+	Piece* bKing;
+	Piece* wKing;
 	std::vector<Piece*> allPieces;
 	void setStartBoard();
 
@@ -16,6 +18,7 @@ public:
 	~Board();
 	
 	bool movePiece(Piece* piece, int newX, int newY);
+
 
 
 };
