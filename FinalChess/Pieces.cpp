@@ -34,12 +34,15 @@ void Piece::addMove(int x, int y) {
 }
 
 bool Piece::thisMoveCanMakeChecked(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY) {
+	isCheckingChecked = true;
+	bool res = false;
+	int i = 0, j = 0;
+	
 	// Take the king
 	Piece* king = nullptr;
-	King* king_ = nullptr;
 	bool found = false;
-	for (int i = 0; i < 8 && !found; i++) {
-		for (int j = 0; j < 8 && !found; j++) {
+	for (i = 0; i < 8 && !found; i++) {
+		for (j = 0; j < 8 && !found; j++) {
 			if (piecesOnBoard[i][j] && piecesOnBoard[i][j]->id == PieceID::King && piecesOnBoard[i][j]->color == color) {
 				king = piecesOnBoard[i][j];
 				found = true;
@@ -49,43 +52,46 @@ bool Piece::thisMoveCanMakeChecked(vector<vector<Piece*>>& piecesOnBoard, int ne
 
 	// Save the old things
 	Piece* dest = piecesOnBoard[newX][newY];
+	vector<int> oldTableMoves = vector<int>();
 	int oldX = posX, oldY = posY;
 	
-	// Try the move
+	// Try the move and check King is checked
 	if (dest) dest->isAlive = false;
-	piecesOnBoard[posX][posY] = nullptr;
-	piecesOnBoard[newX][newY] = this;
+	piecesOnBoard[oldX][oldY] = nullptr; // move away from old position
+	piecesOnBoard[newX][newY] = this; // move to new position
+	posX = newX; posY = newY;
 
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
+	found = false;
+	for (i = 0; i < 8 && !found; i++) {
+		for (j = 0; j < 8 && !found; j++) {
 			if (piecesOnBoard[i][j] && piecesOnBoard[i][j]->color != color) {
-				if (piecesOnBoard[i][j]->id == PieceID::Queen) {
-					cout << endl;
-				}
+				oldTableMoves.clear();
+				oldTableMoves = piecesOnBoard[i][j]->tableMove;
 				piecesOnBoard[i][j]->updateTableMove(piecesOnBoard);
+				if (piecesOnBoard[i][j]->isLegalMove(king->posX, king->posY)) {
+					res = true;
+					found = true;
+				}
+				// Restore the enemy that cannot kill the King
+				piecesOnBoard[i][j]->tableMove.clear();
+				piecesOnBoard[i][j]->tableMove = oldTableMoves;
 			}
 		}
-	}
-
-	// Check the move 
-	bool res = false;
-	king_ = dynamic_cast<King*>(king);
-	if (king_ && king_->isChecked(piecesOnBoard)) {
-		res = true;
 	}
 
 	// UNDO things
 	piecesOnBoard[newX][newY] = dest;
 	if (dest) dest->isAlive = true;
-	piecesOnBoard[posX][posY] = this;
+	piecesOnBoard[oldX][oldY] = this;
+	posX = oldX; posY = oldY;
 
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			if (piecesOnBoard[i][j] && piecesOnBoard[i][j]->color != color)
-				piecesOnBoard[i][j]->updateTableMove(piecesOnBoard);
-		}
+	// Restore table moves
+	if (found && i - 1 < 8 && j - 1 < 8) {
+		piecesOnBoard[i - 1][j - 1]->tableMove.clear();
+		piecesOnBoard[i - 1][j - 1]->tableMove = oldTableMoves;
 	}
 
+	isCheckingChecked = false;
 	return res;
 }
 
@@ -104,8 +110,6 @@ bool Piece::move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY) {
 	posX = newX;
 	posY = newY;
 	piecesOnBoard[posX][posY] = this;
-	// If Rook/King => lose Castling
-	// If Pawn => lose firstMove
 	return true;
 }
 
@@ -126,21 +130,17 @@ void Rook::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	int s[] = { -1, 1 , 0, 0 };
 	for (int count = 0; count < 4; count++, i++, j--) {
 		x = this->posX + s[i]; y = this->posY + s[j];
+		bool isBlocked = false;
 
-		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color)) {
-			if (!isCheckingChecked) {
-				isCheckingChecked = true;
-				if (thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
-					// If moving to this move leading in checked => cancel this move
-					isCheckingChecked = false;
-					x += s[i]; y += s[j];
-					continue;
-				}
-				isCheckingChecked = false;
-			}
+		// Loop by this direction until out of board or meet an ally or attack an enemy
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color) && !isBlocked) {
 			if (piecesOnBoard[x][y]) {
-				if (piecesOnBoard[x][y]->color != color) this->addMove(x, y);
-				break; // This direction is blocked by an ally or an enemy
+				isBlocked = true; // This direction is blocked by an an enemy
+			}
+			if (!isCheckingChecked && thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
+				// If moving to this move leading in checked => cancel this move
+				x += s[i]; y += s[j];
+				continue;
 			}
 			this->addMove(x, y);
 			x += s[i]; y += s[j];
@@ -168,14 +168,16 @@ void Knight::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	if (!this->isAlive) return;
 	int x, y, i = 0, j = 7;
 	int s[] = { 1, 1, -1, -1, 2, -2, 2, -2 };
-	for (int count = 0; count < 8; count++) {
-		x = this->posX; y = this->posY;
-		x += s[i]; y += s[j];
+	for (int count = 0; count < 8; count++, i++, j--) {
+		x = this->posX + s[i]; y = this->posY + s[j];
+
 		if (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color)) {
+			if (!isCheckingChecked && thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
+				// If moving to this move leading in checked => cancel this move
+				continue;
+			}
 			this->addMove(x, y);
-			x += s[i]; y += s[j];
 		}
-		i++; j--;
 	}
 }
 
@@ -194,14 +196,21 @@ void Bishop::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	int x, y, i = 0, j = 1;
 	int s[] = { 1, 1, -1, -1, 1 };
 	for (int count = 0; count < 4; count++) {
-		x = this->posX; y = this->posY;
-		x += s[i]; y += s[i] * s[j];
-		while (x < 8 && x >= 0 && y < 8 && y >= 0 && !piecesOnBoard[x][y]) {
+		x = this->posX + s[i]; y = this->posY + s[i] * s[j];
+		bool isBlocked = false;
+
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != color) && !isBlocked) {
+			if (piecesOnBoard[x][y]) {
+				isBlocked = true; // This direction is blocked by an enemy
+			}
+			if (!isCheckingChecked && thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
+				// If moving to this move leading in checked => cancel this 
+				x += s[i]; y += s[i] * s[j];
+				continue;
+			}
+			
 			this->addMove(x, y);
 			x += s[i]; y += s[i] * s[j];
-		}
-		if (x < 8 && x >= 0 && y < 8 && y >= 0 && piecesOnBoard[x][y]->color != this->color) {
-			this->addMove(x, y);
 		}
 		i++; j++;
 	}
@@ -223,33 +232,47 @@ void Queen::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	// updateTableMove of Bishop & Rook
 	int x, y, i = 0, j = 1;
 	int s[] = { 1, 1, -1, -1, 1 , 0, 0 };
+
+	// Copy Bishop
 	for (int count = 0; count < 4; count++) {
 		x = this->posX + s[i]; y = this->posY + s[i] * s[j];
+		bool isBlocked = false;
 
-		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color)) {
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != color) && !isBlocked) {
 			if (piecesOnBoard[x][y]) {
-				if (piecesOnBoard[x][y]->color != color) this->addMove(x, y);
-				break; // This direction has been blocked
+				isBlocked = true; // This direction is blocked by an enemy
 			}
+			if (!isCheckingChecked && thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
+				// If moving to this move leading in checked => cancel this 
+				x += s[i]; y += s[i] * s[j];
+				continue;
+			}
+
 			this->addMove(x, y);
 			x += s[i]; y += s[i] * s[j];
 		}
-
 		i++; j++;
 	}
-	i = 3; j = 6;
-	for (int count = 0; count < 4; count++) {
-		x = this->posX + s[i]; y = this->posY + s[j];
 
-		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color)) {
+	// Copy Rook
+	i = 3; j = 6;
+	for (int count = 0; count < 4; count++, i++, j--) {
+		x = this->posX + s[i]; y = this->posY + s[j];
+		bool isBlocked = false;
+
+		// Loop by this direction until out of board or meet an ally or attack an enemy
+		while (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != this->color) && !isBlocked) {
 			if (piecesOnBoard[x][y]) {
-				if (piecesOnBoard[x][y]->color != color) this->addMove(x, y);
-				break; // This direction has been blocked
+				isBlocked = true; // This direction is blocked by an an enemy
+			}
+			if (!isCheckingChecked && thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
+				// If moving to this move leading in checked => cancel this move
+				x += s[i]; y += s[j];
+				continue;
 			}
 			this->addMove(x, y);
 			x += s[i]; y += s[j];
 		}
-		i++; j--;
 	}
 	
 
@@ -277,36 +300,32 @@ void King::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	int x, y, i, j;
 	int s[] = { 1, 1, -1, -1, 1 , 0, 0 };
 
-	// Check legal moves -> not include illegal move
+	// Straight moves
 	i = 3; j = 6;
-	for (int count = 0; count < 4; count++) {
-		x = this->posX; y = this->posY;
-		x += s[i]; y += s[j];
-		if (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != color)) {
-			this->addMove(x, y);
-			// check legal move
-			if (isChecked(piecesOnBoard, x, y)) {
-				this->tableMove.pop_back();
-				this->tableMove.pop_back(); // King cannot go inside attack range of enemy
+	for (int count = 0; count < 4; count++, i++, j--) {
+		x = this->posX + s[i]; y = this->posY + s[j];
+
+		if (x >= 0 && x < 8 && y >= 0 && y < 8 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != color)) {
+			if (!isCheckingChecked && thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
+				// If moving to this move leading in checked => cancel this move
+				continue;
 			}
-			x += s[i]; y += s[j];
+			this->addMove(x, y);
 		}
-		i++; j--;
 	}
 
+	// Diagonal moves
 	i = 0; j = 1;
-	for (int count = 0; count < 4; count++) {
-		x = this->posX; y = this->posY;
-		x += s[i]; y += s[i] * s[j];
-		if (x < 8 && x >= 0 && y < 8 && y >= 0 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != color)) {
-			this->addMove(x, y);
-			if (isChecked(piecesOnBoard, x, y)) {
-				this->tableMove.pop_back();
-				this->tableMove.pop_back(); // King cannot go inside attack range of enemy
+	for (int count = 0; count < 4; count++, i++, j++) {
+		x = this->posX + s[i]; y = this->posY + s[i] * s[j];
+
+		if (x >= 0 && x < 8 && y >= 0 && y < 8 && (!piecesOnBoard[x][y] || piecesOnBoard[x][y]->color != color)) {
+			if (!isCheckingChecked && thisMoveCanMakeChecked(piecesOnBoard, x, y)) {
+				// If moving to this move leading in checked => cancel this mov
+				continue;
 			}
-			x += s[i]; y += s[i] * s[j];
+			this->addMove(x, y);
 		}
-		i++; j++;
 	}
 
 

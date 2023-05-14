@@ -16,7 +16,6 @@ public:
 	~Board();
 	
 	bool movePiece(Piece* piece, int newX, int newY);
-	void updateTableMove(Piece* piece);
 
 
 };

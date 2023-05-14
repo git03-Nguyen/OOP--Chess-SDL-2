@@ -20,7 +20,7 @@ void Board::setStartBoard() {
     }
 
     for (auto& p : allPieces) {
-        updateTableMove(p);
+        p->updateTableMove(piecesOnBoard);
     }
 }
 
@@ -73,7 +73,7 @@ bool Board::movePiece(Piece* piece, int newX, int newY) {
     for (auto& p : allPieces) {
         p->updateTableMove(piecesOnBoard);
     }
-    piece->updateTableMove(piecesOnBoard);
+
     // UPdate table move for 2 kings (cuz king must know enemies' attack range before moving)
     for (auto& p : allPieces) {
         if (p->id == PieceID::King) {
@@ -91,11 +91,4 @@ bool Board::movePiece(Piece* piece, int newX, int newY) {
     return true;
 }
 
-void Board::updateTableMove(Piece* piece) {
-    
-    
-    piece->updateTableMove(this->piecesOnBoard);
-
-    // Check / Checkmate
-}
 
