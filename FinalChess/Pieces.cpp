@@ -360,16 +360,15 @@ bool King::move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY) {
 
 void King::addCastlingMove(vector<vector<Piece*>>& piecesOnBoard) {
 	if (!canCastling) return;
-	int x = 4, y = 7 * (int)(color == Color::White);
-	if (posX != x || posY != y) return;
+	if (posX != 4 || (posY != 0 && posY != 7)) return;
 	
 	bool flag = true;
 	// King side
-	if (piecesOnBoard[7][y] && piecesOnBoard[7][y]->id == PieceID::Rook && piecesOnBoard[7][y]->color == color) {
-		Rook* rook = dynamic_cast<Rook*>(piecesOnBoard[7][y]);
+	if (piecesOnBoard[7][posY] && piecesOnBoard[7][posY]->id == PieceID::Rook && piecesOnBoard[7][posY]->color == color) {
+		Rook* rook = dynamic_cast<Rook*>(piecesOnBoard[7][posY]);
 		if (rook->canCastling && !this->isBeingAttacked(piecesOnBoard, color)) {
 			for (int i = 5; i < 7; i++) {
-				if (piecesOnBoard[i][y] || isBeingAttacked(piecesOnBoard, color, i, y)) {
+				if (piecesOnBoard[i][posY] || isBeingAttacked(piecesOnBoard, color, i, posY)) {
 					flag = false;
 					break;
 				}
@@ -381,15 +380,15 @@ void King::addCastlingMove(vector<vector<Piece*>>& piecesOnBoard) {
 	}
 	else flag = false;
 
-	if (flag) this->addMove(6, y);
+	if (flag) this->addMove(6, posY);
 	flag = true;
 
 	// Queen side
-	if (piecesOnBoard[0][y] && piecesOnBoard[0][y]->id == PieceID::Rook && piecesOnBoard[0][y]->color == color) {
-		Rook* rook = dynamic_cast<Rook*>(piecesOnBoard[0][y]);
+	if (piecesOnBoard[0][posY] && piecesOnBoard[0][posY]->id == PieceID::Rook && piecesOnBoard[0][posY]->color == color) {
+		Rook* rook = dynamic_cast<Rook*>(piecesOnBoard[0][posY]);
 		if (rook->canCastling && !this->isBeingAttacked(piecesOnBoard,color)) {
 			for (int i = 1; i < 4; i++) {
-				if (piecesOnBoard[i][y] || isBeingAttacked(piecesOnBoard, color, i, y)) {
+				if (piecesOnBoard[i][posY] || isBeingAttacked(piecesOnBoard, color, i, posY)) {
 					flag = false;
 					break;
 				}
@@ -402,7 +401,7 @@ void King::addCastlingMove(vector<vector<Piece*>>& piecesOnBoard) {
 	else flag = false;
 
 
-	if (flag) this->addMove(2, y);
+	if (flag) this->addMove(2, posY);
 
 }
 

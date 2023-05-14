@@ -26,6 +26,9 @@ private:
 	Piece* clickedPiece;
 	bool boardStateChange;
 
+	int matchResult; // 0: going on ; 1: white win ; -1: black win
+	int checkWinLose() const;
+
 	// uitilities
 	void changeTurn();
 

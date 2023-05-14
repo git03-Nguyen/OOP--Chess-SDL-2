@@ -151,6 +151,7 @@
     <ClInclude Include="GuiManager.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Pieces.h" />
+    <ClInclude Include="Player.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="GuiManager.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Pieces.cpp" />
+    <ClCompile Include="Player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\Assets\Background\background.jpg" />

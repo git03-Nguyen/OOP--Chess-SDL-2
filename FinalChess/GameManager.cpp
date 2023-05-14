@@ -1,5 +1,17 @@
 #include "GameManager.h"
 
+int GameManager::checkWinLose() const {
+	bool runOutOfMove = true;
+	for (int i = 0; i < 8 && runOutOfMove; i++) {
+		for (int j = 0; j < 8 && runOutOfMove; j++) {
+			runOutOfMove = !((board->piecesOnBoard[i][j] && board->piecesOnBoard[i][j]->color != currentTurn
+				&& board->piecesOnBoard[i][j]->tableMove.size() != 0));
+		}
+	}
+	if (!runOutOfMove) return 0;
+	return (currentTurn == Color::White) ? 1 : -1;
+}
+
 void GameManager::changeTurn() {
 	currentTurn = (currentTurn == Color::White) ? Color::Black : Color::White;
 }
@@ -27,6 +39,7 @@ GameManager::GameManager(const char* title, int xPos, int yPos, int width, int h
 	focusingBtn = nullptr;
 	clickedPiece = nullptr;
 	boardStateChange = true;
+	matchResult = 0;
 
 	gui->render(currentTurn, clickedPiece, focusingBtn);
 
@@ -47,12 +60,21 @@ void GameManager::gameLoop(int fps) {
 
 	while (isRunning) {
 		frameStart = SDL_GetTicks();
-		handleEvent();
+		handleEvent(); 
 		if (boardStateChange) gui->render(currentTurn, clickedPiece, focusingBtn);
 
 		// set default flags -> when no event is handled -> no change in GUI
 		boardStateChange = false; 
 
+		// If a team has won -> menu WIN -> exit or return to main menu
+		if (matchResult) {
+			// gui->showMatchResult(matchResult);
+			// GameState -> MatchResultState
+			if (matchResult == 1) cout << "WHITE WIN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+			else cout << "BLACK WIN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+			//--> return to handle event with MatchResultScreen, not PlayingScreen
+		}
+		
 		frameTime = SDL_GetTicks() - frameStart;
 
 		if (frameDelay > frameTime) {
@@ -141,7 +163,8 @@ void GameManager::handleChoosingMove(int newX, int newY) {
 		if (board->movePiece(clickedPiece, newX, newY)) {
 			std::cout << "Moved to " << newX << " " << newY << std::endl;
 			clickedPiece = nullptr;
-			changeTurn();
+			// Before changing turn, check win/lose
+			if (!(matchResult = checkWinLose())) changeTurn();
 		}
 	}
 	// If choose "illegal" next move -> return to handleEvent() -> pick piece again
