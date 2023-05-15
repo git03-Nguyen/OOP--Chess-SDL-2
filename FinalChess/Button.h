@@ -5,15 +5,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 
-#define BUTTON_SIZE 60
-#define SETTING_POS_X 600
-#define SETTING_POS_Y 500
-#define UNDO_POS_X 600
-#define UNDO_POS_Y 280
-#define REDO_POS_X 600
-#define REDO_POS_Y 350
-
-enum class ButtonType { NONE = -1, SETTINGS = 0, UNDO = 1, REDO = 2 };
+enum ButtonType { HUMAN, COM, EASY, HARD, WHITE, BLACK, SETTING, UNDO, REDO, QUEEN, BISHOP, KNIGHT, ROOK, BACK };
 
 class Button {
 public:
@@ -28,5 +20,8 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const Button& button);
 
 };
+
+
+
 
 

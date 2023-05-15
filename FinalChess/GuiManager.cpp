@@ -6,8 +6,7 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 
 	SDL_Point size;
 	SDL_GetWindowSize(window, &size.x, &size.y);
-	SCREEN_WIDTH = size.x;
-	SCREEN_HEIGHT = size.y;
+	SCREEN_WIDTH = size.x; SCREEN_HEIGHT = size.y;
 	BOARD_SIZE = SCREEN_HEIGHT - 2 * BOARD_OFFSET;
 	CELL_SIZE = round((BOARD_SIZE - 2 * BOARD_BORDER) / 8.0);
 	SIDEBAR_WIDTH = SCREEN_WIDTH - BOARD_OFFSET - BOARD_SIZE;
@@ -23,20 +22,20 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	killingMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/killing_move.png");
 	
 	// new buttons
-	buttons[0] = new Button(SETTING_POS_X, SETTING_POS_Y, BUTTON_SIZE, ButtonType::SETTINGS);
-	buttons[0]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
+	buttons.resize(15);
+	for (auto& button : buttons) button = nullptr;
+	buttons[ButtonType::SETTING] = new Button(SETTING_POS_X, SETTING_POS_Y, BUTTON_SIZE, ButtonType::SETTING);
+	buttons[ButtonType::SETTING]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
+	buttons[ButtonType::UNDO] = new Button(UNDO_POS_X, UNDO_POS_Y, BUTTON_SIZE, ButtonType::UNDO);
+	buttons[ButtonType::UNDO]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/undo.png");
+	buttons[ButtonType::REDO] = new Button(REDO_POS_X, REDO_POS_Y, BUTTON_SIZE, ButtonType::REDO);
+	buttons[ButtonType::REDO]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
+	// ...
 
-	buttons[1] = new Button(UNDO_POS_X, UNDO_POS_Y, BUTTON_SIZE, ButtonType::UNDO);
-	buttons[1]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/undo.png");
-
-	buttons[2] = new Button(REDO_POS_X, REDO_POS_Y, BUTTON_SIZE, ButtonType::REDO);
-	buttons[2]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
-
+	// pieces' textures
 	for (auto& row : board->piecesOnBoard) {
 		for (auto& piece : row) {
-			if (piece) {
-				piece->setTexture(renderer);
-			}
+			if (piece) piece->setTexture(renderer);
 		}
 	}
 
@@ -48,41 +47,84 @@ GuiManager::~GuiManager() {
 	SDL_DestroyTexture(blackTurnTexture);
 	SDL_DestroyTexture(whiteTurnTexture);
 	SDL_DestroyTexture(nextMoveTexture);
-	for (auto& button : buttons) {
-		delete button;
-	}
+	for (auto& button : buttons) if (button) delete button;
+	buttons.clear();
 	SDL_DestroyRenderer(renderer);
 	TTF_Quit();
 	IMG_Quit();
 }
 
-void GuiManager::render(Color turn, Piece* clickedPiece, Button* focusingBtn) {
+void GuiManager::render(GameState* gameState) {
+	if (!gameState->guiHasChanged) return;
+
 	SDL_RenderClear(renderer);
-	
-	// Draw background
-	drawBackground();
 
-	// Draw board
-	drawBoard();
-	
-	// Draw other things (menu, buttons, ...)
-	drawButtons(focusingBtn);
-	drawCurrentTurn(turn);
+	switch (gameState->state) {
 
-	// Draw pieces
-	drawAllPieces();
-	renderHighLight(clickedPiece);
+	case State::MAIN_MENU:
+		// Showing main menu
+		cout << "MAIN_MENU is showing ..." << endl;
+		break;
+
+	case State::CHOOSE_COLOR:
+		// Showing choose player (white/black)
+		cout << "CHOOSE_PLAYER is showing ..." << endl;
+		break;
+
+	case State::CHOOSE_MODE:
+		// Showing choose mode (random/hard)
+		cout << "CHOOSE_MODE is showing ..." << endl;
+		break;
+
+	// GUI when playing game -> default behind is PLAYING_CHOOSE & PLAYING_MOVE
+	default: 
+		// Draw background
+		drawBackground();
+		// Draw board
+		drawBoard();
+		// Draw other things (menu, buttons, ...)
+		drawButtons(gameState->state, gameState->focusedButton);
+		drawCurrentTurn(gameState->currentColor);
+		// Draw pieces
+		drawAllPieces();
+		renderHighLight(gameState->clickedPiece);
+
+		switch (gameState->state) {
+		case State::SETTING_MENU:
+			// Showing menu settings over playing GUI
+			renderSettingMenu();
+			break;
+
+		case State::PROMOTION:
+			// Showing promotion over playing GUI
+			cout << "PROMOTION is showing ..." << endl;
+			break;
+
+		case State::MATCH_RESULT:
+			// Showing who wins
+			renderMatchResult(gameState->matchResult);
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
+	}
 
 	SDL_RenderPresent(renderer);
 
-	std::cout << "Refresh screen" << std::endl;
+	// set flag to render -> optimizing performance
+	gameState->guiHasChanged = false;
+
 }
 
-void GuiManager::renderHighLight(Piece* piece) {
-	if (!piece) return;
+void GuiManager::renderHighLight(Piece* clickedPiece) {
+	if (!clickedPiece) return;
 
-	int x = BOARD_OFFSET + BOARD_BORDER + piece->posX * CELL_SIZE;
-	int y = BOARD_OFFSET + BOARD_BORDER + piece->posY * CELL_SIZE;
+	int x = BOARD_OFFSET + BOARD_BORDER + clickedPiece->posX * CELL_SIZE;
+	int y = BOARD_OFFSET + BOARD_BORDER + clickedPiece->posY * CELL_SIZE;
 	SDL_Rect cellRect = { x, y, CELL_SIZE, CELL_SIZE };
 
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -91,12 +133,12 @@ void GuiManager::renderHighLight(Piece* piece) {
 	
 	SDL_SetRenderDrawColor(renderer, 101, 181, 85, 100);
 	SDL_RenderFillRect(renderer, &cellRect);
-	SDL_RenderCopy(renderer, piece->texture, NULL, &cellRect);
+	SDL_RenderCopy(renderer, clickedPiece->texture, NULL, &cellRect);
 
-	if (piece->tableMove.size() > 0) {
-		for (int i = 0; i < piece->tableMove.size() - 1; i += 2) {
-			int X = piece->tableMove[i];
-			int Y = piece->tableMove[i + 1];
+	if (clickedPiece->tableMove.size() > 0) {
+		for (int i = 0; i < clickedPiece->tableMove.size() - 1; i += 2) {
+			int X = clickedPiece->tableMove[i];
+			int Y = clickedPiece->tableMove[i + 1];
 			SDL_Rect cellRect = { BOARD_OFFSET + BOARD_BORDER + X * CELL_SIZE + CELL_SIZE / 4, 
 									BOARD_OFFSET + BOARD_BORDER + Y * CELL_SIZE + CELL_SIZE / 4,
 									CELL_SIZE / 2, CELL_SIZE / 2 };
@@ -111,22 +153,75 @@ void GuiManager::renderHighLight(Piece* piece) {
 	SDL_RenderPresent(renderer);
 }
 
-void GuiManager::renderClickBtn(Button* button) {
-	if (!button) return;
-	std::cout << "Clicked on button " << *button << std::endl;
+void GuiManager::renderClickBtn(Button* clickedButton) {
+	if (!clickedButton) return;
+	std::cout << "Clicked on button " << *clickedButton << std::endl;
 	SDL_Rect btnRect;
 
-	switch (button->type) {
-	case ButtonType::SETTINGS:
+	switch (clickedButton->type) {
+	case ButtonType::SETTING:
 		
 		break;
 	}
 }
 
-Button* GuiManager::getButton(int x, int y) {
+Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
+
+	switch (gameState->state) {
+	case State::MAIN_MENU:
+		return getButtonMainMenu(x, y);
+		
+	case State::CHOOSE_MODE:
+		return getButtonChooseMode(x, y);
+
+	case State::CHOOSE_COLOR:
+		return getButtonChooseColor(x, y);
+
+	case State::PLAYING:
+		return getButtonPlaying(x, y);
+
+	case State::SETTING_MENU:
+		return getButtonSetting(x, y);
+
+	case State::PROMOTION:
+		return getButtonPromotion(x, y);
+
+	case State::MATCH_RESULT:
+		return getButtonMatchResult(x, y);
+
+	default:
+		return nullptr;
+	}
+
+}
+
+bool GuiManager::isOnBoard(int x, int y) {
+	int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+	int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+	return (x - BOARD_OFFSET - BOARD_BORDER >= 0 && y - BOARD_OFFSET - BOARD_BORDER >= 0
+		&& boardX >= 0 && boardX <= 7 && boardY >= 0 && boardY <= 7);
+}
+
+// ----------------------------------
+// Get specific button
+
+Button* GuiManager::getButtonMainMenu(int x, int y) const {
+	return nullptr;
+}
+
+Button* GuiManager::getButtonChooseMode(int x, int y) const {
+	return nullptr;
+}
+
+Button* GuiManager::getButtonChooseColor(int x, int y) const {
+	return nullptr;
+}
+
+Button* GuiManager::getButtonPlaying(int x, int y) const {
 	SDL_Rect btnRect;
 
 	for (auto& button : buttons) {
+		if (!button) continue;
 		btnRect = { button->posX, button->posY, button->size, button->size };
 		if (x > btnRect.x && x < btnRect.x + btnRect.w
 			&& y > btnRect.y && y < btnRect.y + btnRect.h)
@@ -136,12 +231,58 @@ Button* GuiManager::getButton(int x, int y) {
 	return nullptr;
 }
 
-bool GuiManager::isOnBoard(int x, int y) {
-	int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
-	int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
-	return (x - BOARD_OFFSET - BOARD_BORDER >= 0 && y - BOARD_OFFSET - BOARD_BORDER >= 0
-		&& boardX >= 0 && boardX <= 7 && boardY >= 0 && boardY <= 7);
+Button* GuiManager::getButtonSetting(int x, int y) const {
+	return nullptr;
 }
+
+Button* GuiManager::getButtonPromotion(int x, int y) const {
+	return nullptr;
+}
+
+Button* GuiManager::getButtonMatchResult(int x, int y) const {
+	return nullptr;
+}
+
+// ----------------------
+
+void GuiManager::addBlendLayer() const {
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128);
+	SDL_Rect rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+	SDL_RenderFillRect(renderer, &rect);
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+}
+
+void GuiManager::renderMatchResult(int matchResult) const {
+	cout << "MATCH_RESULT is showing ... " << endl;
+	if (matchResult == 1) {
+		cout << "WHITE WINS!!!!!!!!!!!!" << endl;
+	}
+	else if (matchResult == -1) {
+		cout << "BLACK WINS!!!!!!!!!!!!!" << endl;
+	}
+	else {
+		cout << "I DON'T KNOW WHO WINS!!!!" << endl;
+	}
+
+	addBlendLayer();
+
+	// Result ....
+
+}
+
+void GuiManager::renderSettingMenu() const {
+	cout << "SETTING_MENU is showing ... " << endl;
+	
+	addBlendLayer();
+
+	// Settings menu UI: UI, buttons, ...
+
+
+
+}
+
+// --------------------------
 
 void GuiManager::drawAllPieces() {
 	for (auto& row : board->piecesOnBoard) {
@@ -156,26 +297,28 @@ void GuiManager::drawAllPieces() {
 	}
 }
 
-void GuiManager::drawButtons(Button* focusingBtn) {
-	if (focusingBtn) {
-		std::cout << "Focusing button " << *focusingBtn << std::endl;
-		focusingBtn->posX -= 2;
-		focusingBtn->posY -= 2;
-		focusingBtn->size += 2;
+void GuiManager::drawButtons(State gameState, Button* focusedButton) {
+	if (focusedButton) {
+		std::cout << "Focusing button " << *focusedButton << std::endl;
+		// Zoom out the focused button
+		focusedButton->posX -= 2;
+		focusedButton->posY -= 2;
+		focusedButton->size += 2;
 	}
+	
+	drawCircleButton(buttons[ButtonType::SETTING]);
+	drawCircleButton(buttons[ButtonType::UNDO]);
+	drawCircleButton(buttons[ButtonType::REDO]);
 
-	drawButton(buttons[0]);
-	drawButton(buttons[1]);
-	drawButton(buttons[2]);
-
-	if (focusingBtn) {
-		focusingBtn->posX += 2;
-		focusingBtn->posY += 2;
-		focusingBtn->size -= 2;
+	if (focusedButton) {
+		focusedButton->posX += 2;
+		focusedButton->posY += 2;
+		focusedButton->size -= 2;
 	}
 }
 
-void GuiManager::drawButton(Button* button) {
+void GuiManager::drawCircleButton(Button* button) {
+	if (!button) return;
 	SDL_Rect btnRect = { button->posX, button->posY, button->size, button->size };
 	SDL_RenderCopy(renderer, button->texture, NULL, &btnRect);
 

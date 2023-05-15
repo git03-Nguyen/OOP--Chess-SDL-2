@@ -9,9 +9,7 @@ Button::~Button() {
 
 std::ostream& operator<<(std::ostream& os, const Button& button) {
 	switch (button.type) {
-	case ButtonType::NONE:
-		return os << "None";
-	case ButtonType::SETTINGS:
+	case ButtonType::SETTING:
 		return os << "settings";
 	case ButtonType::UNDO:
 		return os << "undo";

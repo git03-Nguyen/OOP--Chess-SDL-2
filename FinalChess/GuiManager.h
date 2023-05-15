@@ -7,8 +7,7 @@
 #include <string>
 
 #include "Board.h"
-#include "Pieces.h"
-#include "Button.h"
+#include "GameState.h"
 
 #define BOARD_OFFSET 29
 #define BOARD_BORDER 39.1
@@ -17,6 +16,14 @@
 #define TURN_POS_Y 50
 #define TURN_WIDTH 110
 #define TURN_HEIGHT 180
+
+#define BUTTON_SIZE 60
+#define SETTING_POS_X 600
+#define SETTING_POS_Y 500
+#define UNDO_POS_X 600
+#define UNDO_POS_Y 280
+#define REDO_POS_X 600
+#define REDO_POS_Y 350
 
 class GuiManager {
 protected:
@@ -34,7 +41,7 @@ protected:
 	SDL_Texture* killingMoveTexture;
 
 	// buttons
-	Button* buttons[3];
+	vector<Button*> buttons;
 
 
 	// Board - pieces
@@ -44,8 +51,8 @@ protected:
 	void drawBackground();
 	void drawBoard();
 	void drawAllPieces();
-	void drawButtons(Button* focusingBtn);
-	void drawButton(Button* button);
+	void drawButtons(State gameState, Button* focusingBtn);
+	void drawCircleButton(Button* button);
 	void drawCurrentTurn(Color turn);
 
 
@@ -53,12 +60,26 @@ public:
 	GuiManager(SDL_Window* _window, Board* piecesOnBoard);
 	~GuiManager();
 
-	void render(Color turn, Piece* clickedPiece, Button* focusingBtn);
+	void render(GameState* gameState);
 	void renderHighLight(Piece* piece);
 	void renderClickBtn(Button* button);
 
-	Button* getButton(int x, int y);
+	Button* getButton(GameState* gameState, int x, int y) const;
 	bool isOnBoard(int x, int y);
+
+	Button* getButtonMainMenu(int x, int y) const;
+	Button* getButtonChooseMode(int x, int y) const;
+	Button* getButtonChooseColor(int x, int y) const;
+	Button* getButtonPlaying(int x, int y) const;
+	Button* getButtonSetting(int x, int y) const;
+	Button* getButtonPromotion(int x, int y) const;
+	Button* getButtonMatchResult(int x, int y) const;
+
+	
+	void addBlendLayer() const;
+	void renderMatchResult(int matchResult) const;
+	void renderSettingMenu() const;
+
 
 };
 

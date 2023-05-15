@@ -5,6 +5,9 @@
 
 #include "Board.h"
 #include "GuiManager.h"
+#include "Player.h"
+#include "GameState.h"
+
 
 class GameManager {
 private:
@@ -15,18 +18,17 @@ private:
 
 	// control model
 	Board* board;
+	Player* player1;
+	Player* player2;
+	Player* player;
 
 	// control view
 	GuiManager* gui;
 
-	// flags
-	bool isRunning;
-	Color currentTurn;
-	Button* focusingBtn;
-	Piece* clickedPiece;
-	bool boardStateChange;
 
-	int matchResult; // 0: going on ; 1: white win ; -1: black win
+	// flags almost in game state
+	GameState* gameState;
+	
 	int checkWinLose() const;
 
 	// uitilities
@@ -40,11 +42,13 @@ public:
 	void gameLoop(int fps);
 
 	void handleEvent();
-	void handleMouseClick(SDL_Event& e);
+	
 	void handleClickOnBoard(int boardX, int boardY);
 	void handleChoosingMove(int newX, int newY);
-	void handleClickButton(Button* clickedBtn);
 
+	// -------------
+	// Count Perft Results
+	int testCaseDepth(int depth) const;
 	
 };
 

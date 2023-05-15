@@ -6,7 +6,8 @@ enum class PlayerType { Human, ComAI };
 class Player {
 public:
     PlayerType type;
-
+    Color color;
+    Player(Color _color);
     virtual void makeMove(Board& board) = 0;
 
 };
@@ -15,7 +16,7 @@ public:
 
 class Human : public Player {
 public:
-    Human();
+    Human(Color _color);
     void makeMove(Board& board) override;
 };
 
@@ -25,8 +26,8 @@ enum class Difficulty { RANDOM, HARD };
 
 class ComAI : public Player {
 public:
-    Difficulty difficulty;
-    ComAI(Difficulty difficulty = Difficulty::RANDOM);
+    Difficulty diff;
+    ComAI(Color _color, Difficulty _diff = Difficulty::RANDOM);
     void makeMove(Board& board) override;
     void makeRandomMove(Board& board) const;
     void makeHardMove(Board& board)const;
