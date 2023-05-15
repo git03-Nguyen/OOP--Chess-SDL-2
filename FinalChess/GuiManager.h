@@ -26,7 +26,7 @@
 #define REDO_POS_Y 350
 
 class GuiManager {
-protected:
+private:
 	int SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_SIZE, SIDEBAR_WIDTH, CELL_SIZE;
 	
 	SDL_Window* window;
@@ -51,34 +51,28 @@ protected:
 	void drawBackground();
 	void drawBoard();
 	void drawAllPieces();
-	void drawButtons(State gameState, Button* focusingBtn);
-	void drawCircleButton(Button* button);
 	void drawCurrentTurn(Color turn);
+	void drawCircleButton(Button* button);
+	void drawHighLight(Piece* piece);
 
 
 public:
-	GuiManager(SDL_Window* _window, Board* piecesOnBoard);
+	GuiManager(SDL_Window* _window, Board* _board);
 	~GuiManager();
 
-	void render(GameState* gameState);
-	void renderHighLight(Piece* piece);
-	void renderClickBtn(Button* button);
-
+	bool isOnBoard(int x, int y) const;
 	Button* getButton(GameState* gameState, int x, int y) const;
-	bool isOnBoard(int x, int y);
 
-	Button* getButtonMainMenu(int x, int y) const;
-	Button* getButtonChooseMode(int x, int y) const;
-	Button* getButtonChooseColor(int x, int y) const;
-	Button* getButtonPlaying(int x, int y) const;
-	Button* getButtonSetting(int x, int y) const;
-	Button* getButtonPromotion(int x, int y) const;
-	Button* getButtonMatchResult(int x, int y) const;
-
-	
+	void render(GameState* gameState);
+	void renderMainMenu(GameState* gameState);
+	void renderChooseOpponent(GameState* gameState);
+	void renderChooseDifficulty(GameState* gameState);
+	void renderChooseColor(GameState* gameState);
+	void renderPlaying(GameState* gameState);
+	void renderSettingMenu(GameState* gameState);
+	void renderPromotionMenu(GameState* gameState);
+	void renderMatchResult(GameState* gameState);
 	void addBlendLayer() const;
-	void renderMatchResult(int matchResult) const;
-	void renderSettingMenu() const;
 
 
 };

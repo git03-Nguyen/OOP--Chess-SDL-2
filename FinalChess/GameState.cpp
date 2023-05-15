@@ -4,7 +4,9 @@ GameState::GameState() {
 	state = State::PLAYING; // -> test: skip main menu ( _ | choose mode), choose color
 	isRunning = true;
 
-	// For MAIN_MENU, CHOOSE_COLOR, CHOOSE_MODE, PLAYING, SETTING_MENU, PROMOTION, MATCH_RESULT -> choose buttons
+	choice = 0; // Human is default
+
+	// For MAIN_MENU, CHOOSE_COLOR, CHOOSE_OPPONENT, PLAYING, SETTING_MENU, PROMOTION, MATCH_RESULT -> choose buttons
 	focusedButton = nullptr;
 	clickedButton = nullptr;
 

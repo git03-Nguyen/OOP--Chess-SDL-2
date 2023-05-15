@@ -123,7 +123,7 @@ void GameManager::handleEvent() {
 			}
 			// Click on buttons -> maybe change the GameState
 			else if (gameState->clickedButton = gui->getButton(gameState, x, y)) {
-				// onClick() is called inside GUI
+				handleClickButton(gameState->clickedButton);
 			}
 			// Click on NOT board or buttons -> empty space
 			else {
@@ -170,6 +170,37 @@ void GameManager::handleChoosingMove(int newX, int newY) {
 	}
 
 	gameState->clickedPiece = nullptr;
+	gameState->guiHasChanged = true;
+}
+
+void GameManager::handleClickButton(Button* clickedButton) {
+	if (!clickedButton) return;
+
+	switch (clickedButton->type) {
+	case ButtonType::SETTING:
+		cout << "Clicked setting!" << endl;
+		gameState->state = State::SETTING_MENU;
+		break;
+
+	case ButtonType::UNDO:
+		cout << "Clicked undo!" << endl;
+		board->undo();
+		gameState->state = State::PLAYING;
+		break;
+
+	case ButtonType::REDO:
+		cout << "Clicked redo!" << endl;
+		board->redo();
+		gameState->state = State::PLAYING;
+		break;
+
+	// Other Buttons
+	// ...
+
+	default:
+		break;
+	}
+	gameState->clickedButton = nullptr;
 	gameState->guiHasChanged = true;
 }
 

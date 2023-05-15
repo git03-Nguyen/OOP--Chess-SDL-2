@@ -2,7 +2,7 @@
 #include "Button.h"
 #include "Pieces.h"
 
-enum class State { MAIN_MENU, CHOOSE_COLOR, CHOOSE_MODE, PLAYING, SETTING_MENU, PROMOTION, MATCH_RESULT };
+enum class State { MAIN_MENU, CHOOSE_OPPONENT, CHOOSE_DIFFICULTY, CHOOSE_COLOR, PLAYING, SETTING_MENU, PROMOTION, MATCH_RESULT };
 
 class GameState {
 public:
@@ -10,7 +10,9 @@ public:
 	State state;
 	bool isRunning;
 
-	// For MAIN_MENU, CHOOSE_COLOR, CHOOSE_MODE, PLAYING, SETTING, PROMOTION, MATCH_RESULT -> choose buttons
+	int choice; // 0: human ; 1: easy AI ; 2: hard AI
+
+	// For MAIN_MENU, CHOOSE_COLOR, CHOOSE_OPPONENT, PLAYING, SETTING, PROMOTION, MATCH_RESULT -> choose buttons
 	Button* focusedButton;
 	Button* clickedButton;
 

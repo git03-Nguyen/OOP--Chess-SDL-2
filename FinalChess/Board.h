@@ -19,6 +19,7 @@ public:
 	
 	bool movePiece(Piece* piece, int newX, int newY);
 
-
+	void undo();
+	void redo();
 
 };

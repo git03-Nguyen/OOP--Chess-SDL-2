@@ -58,59 +58,43 @@ void GuiManager::render(GameState* gameState) {
 	if (!gameState->guiHasChanged) return;
 
 	SDL_RenderClear(renderer);
+	drawBackground();
 
 	switch (gameState->state) {
-
 	case State::MAIN_MENU:
-		// Showing main menu
-		cout << "MAIN_MENU is showing ..." << endl;
+		renderMainMenu(gameState);
+		break;
+
+	case State::CHOOSE_OPPONENT:
+		renderChooseOpponent(gameState);
+		break;
+
+	case State::CHOOSE_DIFFICULTY:
+		renderChooseDifficulty(gameState);
 		break;
 
 	case State::CHOOSE_COLOR:
-		// Showing choose player (white/black)
-		cout << "CHOOSE_PLAYER is showing ..." << endl;
+		renderChooseColor(gameState);
 		break;
 
-	case State::CHOOSE_MODE:
-		// Showing choose mode (random/hard)
-		cout << "CHOOSE_MODE is showing ..." << endl;
+	case State::PLAYING:
+		renderPlaying(gameState);
 		break;
 
-	// GUI when playing game -> default behind is PLAYING_CHOOSE & PLAYING_MOVE
-	default: 
-		// Draw background
-		drawBackground();
-		// Draw board
-		drawBoard();
-		// Draw other things (menu, buttons, ...)
-		drawButtons(gameState->state, gameState->focusedButton);
-		drawCurrentTurn(gameState->currentColor);
-		// Draw pieces
-		drawAllPieces();
-		renderHighLight(gameState->clickedPiece);
-
-		switch (gameState->state) {
-		case State::SETTING_MENU:
-			// Showing menu settings over playing GUI
-			renderSettingMenu();
-			break;
-
-		case State::PROMOTION:
-			// Showing promotion over playing GUI
-			cout << "PROMOTION is showing ..." << endl;
-			break;
-
-		case State::MATCH_RESULT:
-			// Showing who wins
-			renderMatchResult(gameState->matchResult);
-			break;
-
-		default:
-			break;
-		}
-
+	case State::SETTING_MENU:
+		renderSettingMenu(gameState);
 		break;
 
+	case State::PROMOTION:
+		renderPromotionMenu(gameState);
+		break;
+
+	case State::MATCH_RESULT:
+		renderMatchResult(gameState);
+		break;
+
+	default:
+		break;
 	}
 
 	SDL_RenderPresent(renderer);
@@ -120,7 +104,96 @@ void GuiManager::render(GameState* gameState) {
 
 }
 
-void GuiManager::renderHighLight(Piece* clickedPiece) {
+void GuiManager::renderMainMenu(GameState* gameState) {
+	cout << "SETTING_MENU is showing ... " << endl;
+	// ...
+}
+
+void GuiManager::renderChooseOpponent(GameState* gameState) {
+	cout << "CHOOSE_OPPONENT is showing ... " << endl;
+	// ...
+}
+
+void GuiManager::renderChooseDifficulty(GameState* gameState) {
+	renderChooseOpponent(gameState);
+	cout << "CHOOOSE_DIFFICULTY is showing ... " << endl;
+	// ...
+}
+
+void GuiManager::renderChooseColor(GameState* gameState) {
+	cout << "CHOOOSE_COLOR is showing ... " << endl;
+	// ...
+}
+
+void GuiManager::renderPlaying(GameState* gameState) {
+	if (gameState->focusedButton) {
+		std::cout << "Focusing button " << *gameState->focusedButton << std::endl;
+		// Zoom out the focused button
+		gameState->focusedButton->posX -= 2;
+		gameState->focusedButton->posY -= 2;
+		gameState->focusedButton->size += 2;
+	}
+
+	drawCircleButton(buttons[ButtonType::SETTING]);
+	drawCircleButton(buttons[ButtonType::UNDO]);
+	drawCircleButton(buttons[ButtonType::REDO]);
+
+	if (gameState->focusedButton) {
+		gameState->focusedButton->posX += 2;
+		gameState->focusedButton->posY += 2;
+		gameState->focusedButton->size -= 2;
+	}
+	
+	drawBoard();
+	drawAllPieces();
+	
+	drawCurrentTurn(gameState->currentColor);
+	
+	drawHighLight(gameState->clickedPiece);
+
+}
+
+void GuiManager::renderSettingMenu(GameState* gameState) {
+	renderPlaying(gameState);
+	addBlendLayer();
+	cout << "SETTING_MENU is showing ... " << endl;
+	// ...
+}
+
+void GuiManager::renderPromotionMenu(GameState* gameState) {
+	renderPlaying(gameState);
+	addBlendLayer();
+	cout << "PROMOTION is showing ... " << endl;
+	// ...
+}
+
+void GuiManager::renderMatchResult(GameState* gameState) {
+	renderPlaying(gameState);
+	addBlendLayer();
+	cout << "MATCH_RESULT is showing ... " << endl;
+	// Result ....
+	if (gameState->matchResult == 1) {
+		cout << "WHITE WINS!!!!!!!!!!!!" << endl;
+	}
+	else if (gameState->matchResult == -1) {
+		cout << "BLACK WINS!!!!!!!!!!!!!" << endl;
+	}
+	else {
+		cout << "I DON'T KNOW WHO WINS!!!!" << endl;
+	}
+}
+
+void GuiManager::addBlendLayer() const {
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128);
+	SDL_Rect rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+	SDL_RenderFillRect(renderer, &rect);
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+}
+
+// ---------------------------------
+
+void GuiManager::drawHighLight(Piece* clickedPiece) {
 	if (!clickedPiece) return;
 
 	int x = BOARD_OFFSET + BOARD_BORDER + clickedPiece->posX * CELL_SIZE;
@@ -153,41 +226,47 @@ void GuiManager::renderHighLight(Piece* clickedPiece) {
 	SDL_RenderPresent(renderer);
 }
 
-void GuiManager::renderClickBtn(Button* clickedButton) {
-	if (!clickedButton) return;
-	std::cout << "Clicked on button " << *clickedButton << std::endl;
-	SDL_Rect btnRect;
-
-	switch (clickedButton->type) {
-	case ButtonType::SETTING:
-		
-		break;
-	}
-}
-
+// ----------------------------------
+// Get specific button
 Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
+	SDL_Rect btnRect;
 
 	switch (gameState->state) {
 	case State::MAIN_MENU:
-		return getButtonMainMenu(x, y);
+		return nullptr; // not implemented yet
 		
-	case State::CHOOSE_MODE:
-		return getButtonChooseMode(x, y);
+	case State::CHOOSE_OPPONENT:
+		return nullptr; // not implemented yet
 
 	case State::CHOOSE_COLOR:
-		return getButtonChooseColor(x, y);
+		return nullptr; // not implemented yet
 
 	case State::PLAYING:
-		return getButtonPlaying(x, y);
+		for (int i = ButtonType::SETTING; i <= ButtonType::REDO; i++) 
+			if (buttons[i] 
+				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->size
+				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->size)
+				return buttons[i];
+		return nullptr;
 
-	case State::SETTING_MENU:
-		return getButtonSetting(x, y);
+	case State::SETTING_MENU: // Not enough
+		for (int i = ButtonType::BACK; i <= ButtonType::BACK; i++)
+			if (buttons[i]
+				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->size
+				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->size)
+				return buttons[i];
+		return nullptr;
 
 	case State::PROMOTION:
-		return getButtonPromotion(x, y);
+		for (int i = ButtonType::QUEEN; i <= ButtonType::ROOK; i++)
+			if (buttons[i]
+				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->size
+				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->size)
+				return buttons[i];
+		return nullptr;
 
 	case State::MATCH_RESULT:
-		return getButtonMatchResult(x, y);
+		return nullptr; // not implemented yet
 
 	default:
 		return nullptr;
@@ -195,125 +274,25 @@ Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
 
 }
 
-bool GuiManager::isOnBoard(int x, int y) {
+bool GuiManager::isOnBoard(int x, int y) const {
 	int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 	int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 	return (x - BOARD_OFFSET - BOARD_BORDER >= 0 && y - BOARD_OFFSET - BOARD_BORDER >= 0
 		&& boardX >= 0 && boardX <= 7 && boardY >= 0 && boardY <= 7);
 }
 
-// ----------------------------------
-// Get specific button
-
-Button* GuiManager::getButtonMainMenu(int x, int y) const {
-	return nullptr;
-}
-
-Button* GuiManager::getButtonChooseMode(int x, int y) const {
-	return nullptr;
-}
-
-Button* GuiManager::getButtonChooseColor(int x, int y) const {
-	return nullptr;
-}
-
-Button* GuiManager::getButtonPlaying(int x, int y) const {
-	SDL_Rect btnRect;
-
-	for (auto& button : buttons) {
-		if (!button) continue;
-		btnRect = { button->posX, button->posY, button->size, button->size };
-		if (x > btnRect.x && x < btnRect.x + btnRect.w
-			&& y > btnRect.y && y < btnRect.y + btnRect.h)
-			return button;
-	}
-
-	return nullptr;
-}
-
-Button* GuiManager::getButtonSetting(int x, int y) const {
-	return nullptr;
-}
-
-Button* GuiManager::getButtonPromotion(int x, int y) const {
-	return nullptr;
-}
-
-Button* GuiManager::getButtonMatchResult(int x, int y) const {
-	return nullptr;
-}
-
-// ----------------------
-
-void GuiManager::addBlendLayer() const {
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128);
-	SDL_Rect rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-	SDL_RenderFillRect(renderer, &rect);
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-}
-
-void GuiManager::renderMatchResult(int matchResult) const {
-	cout << "MATCH_RESULT is showing ... " << endl;
-	if (matchResult == 1) {
-		cout << "WHITE WINS!!!!!!!!!!!!" << endl;
-	}
-	else if (matchResult == -1) {
-		cout << "BLACK WINS!!!!!!!!!!!!!" << endl;
-	}
-	else {
-		cout << "I DON'T KNOW WHO WINS!!!!" << endl;
-	}
-
-	addBlendLayer();
-
-	// Result ....
-
-}
-
-void GuiManager::renderSettingMenu() const {
-	cout << "SETTING_MENU is showing ... " << endl;
-	
-	addBlendLayer();
-
-	// Settings menu UI: UI, buttons, ...
-
-
-
-}
-
 // --------------------------
 
 void GuiManager::drawAllPieces() {
-	for (auto& row : board->piecesOnBoard) {
-		for (auto& p : row) {
-			if (p) {
-				int x = BOARD_OFFSET + BOARD_BORDER + p->posX * CELL_SIZE;
-				int y = BOARD_OFFSET + BOARD_BORDER + p->posY * CELL_SIZE;
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8;j++) {
+			if (board->piecesOnBoard[i][j]) {
+				int x = BOARD_OFFSET + BOARD_BORDER + board->piecesOnBoard[i][j]->posX * CELL_SIZE;
+				int y = BOARD_OFFSET + BOARD_BORDER + board->piecesOnBoard[i][j]->posY * CELL_SIZE;
 				SDL_Rect pieceRect = { x, y, CELL_SIZE, CELL_SIZE };
-				SDL_RenderCopy(renderer, p->texture, NULL, &pieceRect);
+				SDL_RenderCopy(renderer, board->piecesOnBoard[i][j]->texture, NULL, &pieceRect);
 			}
 		}
-	}
-}
-
-void GuiManager::drawButtons(State gameState, Button* focusedButton) {
-	if (focusedButton) {
-		std::cout << "Focusing button " << *focusedButton << std::endl;
-		// Zoom out the focused button
-		focusedButton->posX -= 2;
-		focusedButton->posY -= 2;
-		focusedButton->size += 2;
-	}
-	
-	drawCircleButton(buttons[ButtonType::SETTING]);
-	drawCircleButton(buttons[ButtonType::UNDO]);
-	drawCircleButton(buttons[ButtonType::REDO]);
-
-	if (focusedButton) {
-		focusedButton->posX += 2;
-		focusedButton->posY += 2;
-		focusedButton->size -= 2;
 	}
 }
 

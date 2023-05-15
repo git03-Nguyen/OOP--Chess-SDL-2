@@ -45,6 +45,7 @@ public:
 	
 	void handleClickOnBoard(int boardX, int boardY);
 	void handleChoosingMove(int newX, int newY);
+	void handleClickButton(Button* clickedButton);
 
 	// -------------
 	// Count Perft Results

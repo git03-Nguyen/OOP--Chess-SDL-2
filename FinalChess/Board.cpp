@@ -93,4 +93,10 @@ bool Board::movePiece(Piece* piece, int newX, int newY) {
     return true;
 }
 
+void Board::undo() {
+}
+
+void Board::redo() {
+}
+
 
