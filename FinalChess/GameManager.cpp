@@ -179,6 +179,7 @@ void GameManager::handleClickButton(Button* clickedButton) {
 	switch (clickedButton->type) {
 	case ButtonType::SETTING:
 		cout << "Clicked setting!" << endl;
+		gameState->focusedButton = nullptr;
 		gameState->state = State::SETTING_MENU;
 		break;
 
@@ -200,6 +201,7 @@ void GameManager::handleClickButton(Button* clickedButton) {
 	default:
 		break;
 	}
+
 	gameState->clickedButton = nullptr;
 	gameState->guiHasChanged = true;
 }

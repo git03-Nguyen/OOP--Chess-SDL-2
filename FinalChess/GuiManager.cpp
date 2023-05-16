@@ -20,6 +20,11 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	whiteTurnTexture = IMG_LoadTexture(renderer, "../Assets/Background/white_move.png");
 	nextMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/next_move.png");
 	killingMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/killing_move.png");
+
+	settingBoardTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/setting_board.png");
+	resumeTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/resume.png");
+	sliderVolumnTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/slider_volumn.png");
+	dotVolumnTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/dot_volumn.png");
 	
 	// new buttons
 	buttons.resize(15);
@@ -47,6 +52,12 @@ GuiManager::~GuiManager() {
 	SDL_DestroyTexture(blackTurnTexture);
 	SDL_DestroyTexture(whiteTurnTexture);
 	SDL_DestroyTexture(nextMoveTexture);
+
+	SDL_DestroyTexture(settingBoardTexture);
+	SDL_DestroyTexture(resumeTexture);
+	SDL_DestroyTexture(sliderVolumnTexture);
+	SDL_DestroyTexture(dotVolumnTexture);
+
 	for (auto& button : buttons) if (button) delete button;
 	buttons.clear();
 	SDL_DestroyRenderer(renderer);
@@ -157,7 +168,17 @@ void GuiManager::renderSettingMenu(GameState* gameState) {
 	renderPlaying(gameState);
 	addBlendLayer();
 	cout << "SETTING_MENU is showing ... " << endl;
+	SDL_Rect settingBoardRect = { 80, 170, 450, 300 };
+	SDL_RenderCopy(renderer, settingBoardTexture, NULL, &settingBoardRect);
+	SDL_Rect sliderRect = { 150, 320, 300, 50 };
+	SDL_RenderCopy(renderer, sliderVolumnTexture, NULL, &sliderRect);
+	SDL_Rect resumeRect = { 485, 165, 50, 50 };
+	SDL_RenderCopy(renderer, resumeTexture, NULL, &resumeRect);
+	SDL_Rect dotRect = { 160 + 6 * (sliderRect.w - 45)/10.0, 322, 20, 40};
+	SDL_RenderCopy(renderer, dotVolumnTexture, NULL, &dotRect);
+
 	// ...
+
 }
 
 void GuiManager::renderPromotionMenu(GameState* gameState) {

@@ -40,6 +40,12 @@ private:
 	SDL_Texture* nextMoveTexture;
 	SDL_Texture* killingMoveTexture;
 
+	// Setting_menu textures
+	SDL_Texture* settingBoardTexture;
+	SDL_Texture* resumeTexture;
+	SDL_Texture* sliderVolumnTexture;
+	SDL_Texture* dotVolumnTexture;
+
 	// buttons
 	vector<Button*> buttons;
 
