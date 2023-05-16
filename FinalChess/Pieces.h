@@ -96,6 +96,7 @@ public:
 class Pawn : public Piece {
 public:
 	bool canFirstMove = true;
+	bool enPassant = false;
 	Pawn(int _posX, int _posY, Color _color);
 	~Pawn();
 	void updateTableMove(vector<vector<Piece*>>& piecesOnBoard) override;

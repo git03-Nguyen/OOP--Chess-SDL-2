@@ -121,6 +121,14 @@ bool Piece::move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY) {
 	posX = newX;
 	posY = newY;
 	piecesOnBoard[posX][posY] = this;
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			if (piecesOnBoard[i][j] && piecesOnBoard[i][j]->id == PieceID::Pawn && piecesOnBoard[i][j]->color != color) {
+				Pawn* enemyPawn = dynamic_cast<Pawn*>(piecesOnBoard[i][j]);
+				enemyPawn->enPassant = false;
+			}
+		}
+	}
 	return true;
 }
 
@@ -419,17 +427,25 @@ void Pawn::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 	this->tableMove.clear();
 	if (!this->isAlive) return;
 
-	//// Test - move to enemy-everywhere
-	//for (int x = 0; x < 8; x++) {
-	//	for (int y = 0; y < 8; y++) {
-	//		Piece* destPiece = piecesOnBoard[x][y];
-	//		// Test
-	//		if (!destPiece || destPiece->color != this->color) {
-	//			this->tableMove.push_back(x);
-	//			this->tableMove.push_back(y);
-	//		}
-	//	}
-	//}
+	// Enpassant
+	if (posX - 1 >= 0 && piecesOnBoard[posX-1][posY] && piecesOnBoard[posX-1][posY]->id == PieceID::Pawn && piecesOnBoard[posX - 1][posY]->color != color) {
+		Pawn* enemyPawn = dynamic_cast<Pawn*>(piecesOnBoard[posX - 1][posY]);
+		if (enemyPawn->enPassant) {
+			int y = (color == Color::White) ? posY - 1 : posY + 1;
+			if (y >= 0 && y < 8 && !piecesOnBoard[posX - 1][y]) {
+				this->addMove(posX - 1, y);
+			}
+		}
+	}
+	if (posX + 1 < 8 && piecesOnBoard[posX + 1][posY] && piecesOnBoard[posX + 1][posY]->id == PieceID::Pawn && piecesOnBoard[posX + 1][posY]->color != color) {
+		Pawn* enemyPawn = dynamic_cast<Pawn*>(piecesOnBoard[posX + 1][posY]);
+		if (enemyPawn->enPassant) {
+			int y = (color == Color::White) ? posY - 1 : posY + 1;
+			if (y >= 0 && y < 8 && !piecesOnBoard[posX + 1][y]) {
+				this->addMove(posX + 1, y);
+			}
+		}
+	}
 
 	// Go straight up - white ;;;; Go straight down - black
 	int x = posX, y = posY;
@@ -468,6 +484,25 @@ void Pawn::updateTableMove(vector<vector<Piece*>>& piecesOnBoard) {
 }
 
 bool Pawn::move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY) {
+	// Checking be enpassant_ed
+	if (abs(newY - posY) == 2) {
+		if (newX - 1 >= 0 && piecesOnBoard[newX - 1][newY]
+			&& piecesOnBoard[newX - 1][newY]->id == PieceID::Pawn && piecesOnBoard[newX - 1][newY]->color != color) {
+			enPassant = true;
+		}else if (newX + 1 >= 0 && piecesOnBoard[newX + 1][newY]
+			&& piecesOnBoard[newX + 1][newY]->id == PieceID::Pawn && piecesOnBoard[newX + 1][newY]->color != color) {
+			enPassant = true;
+		}
+	}
+
+	// Enpassant 
+	if (!piecesOnBoard[newX][newY] && abs(newX - posX) == 1) {
+		int y = (color == Color::White) ? newY + 1 : newY - 1;
+		piecesOnBoard[newX][y]->setDead();
+		cout << piecesOnBoard[newX][y]->imagePath << "is dead!" << endl;
+		piecesOnBoard[newX][y] = nullptr;
+	}
+	
 	if (!Piece::move(piecesOnBoard, newX, newY)) return false;
 	canFirstMove = false;
 	return true;
