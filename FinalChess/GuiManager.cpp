@@ -21,20 +21,22 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	nextMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/next_move.png");
 	killingMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/killing_move.png");
 
-	settingBoardTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/setting_board.png");
-	resumeTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/resume.png");
+	settingBoardTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/setting_board.png"); 
 	sliderVolumnTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/slider_volumn.png");
 	dotVolumnTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/dot_volumn.png");
 	
 	// new buttons
 	buttons.resize(15);
 	for (auto& button : buttons) button = nullptr;
-	buttons[ButtonType::SETTING] = new Button(SETTING_POS_X, SETTING_POS_Y, BUTTON_SIZE, ButtonType::SETTING);
+	buttons[ButtonType::SETTING] = new Button(SETTING_POS_X, SETTING_POS_Y, BUTTON_SIZE, BUTTON_SIZE, ButtonType::SETTING);
 	buttons[ButtonType::SETTING]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
-	buttons[ButtonType::UNDO] = new Button(UNDO_POS_X, UNDO_POS_Y, BUTTON_SIZE, ButtonType::UNDO);
+	buttons[ButtonType::UNDO] = new Button(UNDO_POS_X, UNDO_POS_Y, BUTTON_SIZE, BUTTON_SIZE, ButtonType::UNDO);
 	buttons[ButtonType::UNDO]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/undo.png");
-	buttons[ButtonType::REDO] = new Button(REDO_POS_X, REDO_POS_Y, BUTTON_SIZE, ButtonType::REDO);
+	buttons[ButtonType::REDO] = new Button(REDO_POS_X, REDO_POS_Y, BUTTON_SIZE, BUTTON_SIZE, ButtonType::REDO);
 	buttons[ButtonType::REDO]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
+	buttons[ButtonType::RESUME] = new Button(RESUME_POS_X, RESUME_POS_Y, RESUME_SIZE, RESUME_SIZE, ButtonType::RESUME);
+	buttons[ButtonType::RESUME]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/resume.png");
+
 	// ...
 
 	// pieces' textures
@@ -54,7 +56,6 @@ GuiManager::~GuiManager() {
 	SDL_DestroyTexture(nextMoveTexture);
 
 	SDL_DestroyTexture(settingBoardTexture);
-	SDL_DestroyTexture(resumeTexture);
 	SDL_DestroyTexture(sliderVolumnTexture);
 	SDL_DestroyTexture(dotVolumnTexture);
 
@@ -68,27 +69,29 @@ GuiManager::~GuiManager() {
 void GuiManager::render(GameState* gameState) {
 	if (!gameState->guiHasChanged) return;
 
-	SDL_RenderClear(renderer);
-	drawBackground();
-
 	switch (gameState->state) {
 	case State::MAIN_MENU:
+		SDL_RenderClear(renderer);
 		renderMainMenu(gameState);
 		break;
 
 	case State::CHOOSE_OPPONENT:
+		SDL_RenderClear(renderer);
 		renderChooseOpponent(gameState);
 		break;
 
 	case State::CHOOSE_DIFFICULTY:
+		SDL_RenderClear(renderer);
 		renderChooseDifficulty(gameState);
 		break;
 
 	case State::CHOOSE_COLOR:
+		SDL_RenderClear(renderer);
 		renderChooseColor(gameState);
 		break;
 
 	case State::PLAYING:
+		SDL_RenderClear(renderer);
 		renderPlaying(gameState);
 		break;
 
@@ -137,23 +140,12 @@ void GuiManager::renderChooseColor(GameState* gameState) {
 }
 
 void GuiManager::renderPlaying(GameState* gameState) {
-	if (gameState->focusedButton) {
-		std::cout << "Focusing button " << *gameState->focusedButton << std::endl;
-		// Zoom out the focused button
-		gameState->focusedButton->posX -= 2;
-		gameState->focusedButton->posY -= 2;
-		gameState->focusedButton->size += 2;
-	}
+	gameState->isBlended = false;
 
-	drawCircleButton(buttons[ButtonType::SETTING]);
-	drawCircleButton(buttons[ButtonType::UNDO]);
-	drawCircleButton(buttons[ButtonType::REDO]);
-
-	if (gameState->focusedButton) {
-		gameState->focusedButton->posX += 2;
-		gameState->focusedButton->posY += 2;
-		gameState->focusedButton->size -= 2;
-	}
+	drawBackground();
+	drawCircleButton(buttons[ButtonType::SETTING], gameState->focusedButton);
+	drawCircleButton(buttons[ButtonType::UNDO], gameState->focusedButton);
+	drawCircleButton(buttons[ButtonType::REDO], gameState->focusedButton);
 	
 	drawBoard();
 	drawAllPieces();
@@ -165,19 +157,26 @@ void GuiManager::renderPlaying(GameState* gameState) {
 }
 
 void GuiManager::renderSettingMenu(GameState* gameState) {
-	renderPlaying(gameState);
-	addBlendLayer();
+	if (!gameState->isBlended) {
+		gameState->isBlended = true;
+		addBlendLayer();
+	}
 	cout << "SETTING_MENU is showing ... " << endl;
 	SDL_Rect settingBoardRect = { 80, 170, 450, 300 };
 	SDL_RenderCopy(renderer, settingBoardTexture, NULL, &settingBoardRect);
 	SDL_Rect sliderRect = { 150, 320, 300, 50 };
 	SDL_RenderCopy(renderer, sliderVolumnTexture, NULL, &sliderRect);
-	SDL_Rect resumeRect = { 485, 165, 50, 50 };
-	SDL_RenderCopy(renderer, resumeTexture, NULL, &resumeRect);
-	SDL_Rect dotRect = { 160 + 6 * (sliderRect.w - 45)/10.0, 322, 20, 40};
+	/*SDL_Rect resumeRect = { 485, 165, 50, 50 };
+	SDL_RenderCopy(renderer, resumeTexture, NULL, &resumeRect);*/
+	int volumn = 6;
+	SDL_Rect dotRect = { 160 + volumn * (sliderRect.w - 45)/10.0, 322, 20, 40};
 	SDL_RenderCopy(renderer, dotVolumnTexture, NULL, &dotRect);
+	
+	// Buttons
+	drawCircleButton(buttons[ButtonType::RESUME], gameState->focusedButton, false);
 
 	// ...
+
 
 }
 
@@ -265,24 +264,24 @@ Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
 	case State::PLAYING:
 		for (int i = ButtonType::SETTING; i <= ButtonType::REDO; i++) 
 			if (buttons[i] 
-				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->size
-				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->size)
+				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
+				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
 				return buttons[i];
 		return nullptr;
 
 	case State::SETTING_MENU: // Not enough
-		for (int i = ButtonType::BACK; i <= ButtonType::BACK; i++)
+		for (int i = ButtonType::RESUME; i <= ButtonType::RESUME; i++)
 			if (buttons[i]
-				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->size
-				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->size)
+				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
+				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
 				return buttons[i];
 		return nullptr;
 
 	case State::PROMOTION:
 		for (int i = ButtonType::QUEEN; i <= ButtonType::ROOK; i++)
 			if (buttons[i]
-				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->size
-				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->size)
+				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
+				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
 				return buttons[i];
 		return nullptr;
 
@@ -317,31 +316,50 @@ void GuiManager::drawAllPieces() {
 	}
 }
 
-void GuiManager::drawCircleButton(Button* button) {
+void GuiManager::drawCircleButton(Button* button, Button* focusedButton, bool drawShadow) {
 	if (!button) return;
-	SDL_Rect btnRect = { button->posX, button->posY, button->size, button->size };
-	SDL_RenderCopy(renderer, button->texture, NULL, &btnRect);
-
-	// Draw shadow
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 60);
-
-	int x = btnRect.x + btnRect.w / 2;
-	int y = btnRect.y + btnRect.h / 2;
-	int r = btnRect.w / 2;
-	int segments = 50;
-	double step = M_PI / segments;
-
-	for (int i = 0; i < segments; i++) {
-		int x1 = x + r * cos(i * step);
-		int y1 = y + r * sin(i * step);
-		int x2 = x + r * cos((i + 1) * step);
-		int y2 = y + r * sin((i + 1) * step);
-
-		SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
+	if (focusedButton == button) {
+		std::cout << "Focusing button " << *focusedButton << std::endl;
+		// Zoom in the focused button
+		focusedButton->posX -= 2;
+		focusedButton->posY -= 2;
+		focusedButton->width += 2;
+		focusedButton->height += 2;
 	}
 
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+	SDL_Rect btnRect = { button->posX, button->posY, button->width, button->height };
+	
+	// Draw shadow
+	if (drawShadow) {
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 60);
+
+		int x = btnRect.x + btnRect.w / 2;
+		int y = btnRect.y + btnRect.h / 2;
+		int r = btnRect.w / 2;
+		int segments = 50;
+		double step = M_PI / segments;
+		for (int i = 0; i < segments; i++) {
+			int x1 = x + r * cos(i * step);
+			int y1 = y + r * sin(i * step);
+			int x2 = x + r * cos((i + 1) * step);
+			int y2 = y + r * sin((i + 1) * step);
+
+			SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
+		}
+
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+	}
+
+	SDL_RenderCopy(renderer, button->texture, NULL, &btnRect);
+
+	if (focusedButton == button) {
+		// Normalize focused button
+		focusedButton->posX += 2;
+		focusedButton->posY += 2;
+		focusedButton->width -= 2;
+		focusedButton->height -= 2;
+	}
 
 }
 

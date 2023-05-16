@@ -186,12 +186,16 @@ void GameManager::handleClickButton(Button* clickedButton) {
 	case ButtonType::UNDO:
 		cout << "Clicked undo!" << endl;
 		board->undo();
-		gameState->state = State::PLAYING;
 		break;
 
 	case ButtonType::REDO:
 		cout << "Clicked redo!" << endl;
 		board->redo();
+		break;
+
+	case ButtonType::RESUME:
+		cout << "Clicked resume!" << endl;
+		gameState->focusedButton = nullptr;
 		gameState->state = State::PLAYING;
 		break;
 

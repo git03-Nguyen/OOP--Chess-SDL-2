@@ -25,6 +25,7 @@ public:
 	
 	// flag if any changes in GUI
 	bool guiHasChanged;
+	bool isBlended;
 };
 
 

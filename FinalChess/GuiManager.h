@@ -24,6 +24,11 @@
 #define UNDO_POS_Y 280
 #define REDO_POS_X 600
 #define REDO_POS_Y 350
+#define RESUME_POS_X 485
+#define RESUME_POS_Y 165
+#define RESUME_SIZE 50
+
+
 
 class GuiManager {
 private:
@@ -42,7 +47,6 @@ private:
 
 	// Setting_menu textures
 	SDL_Texture* settingBoardTexture;
-	SDL_Texture* resumeTexture;
 	SDL_Texture* sliderVolumnTexture;
 	SDL_Texture* dotVolumnTexture;
 
@@ -58,7 +62,7 @@ private:
 	void drawBoard();
 	void drawAllPieces();
 	void drawCurrentTurn(Color turn);
-	void drawCircleButton(Button* button);
+	void drawCircleButton(Button* button, Button* focusedButton, bool drawShadow = true);
 	void drawHighLight(Piece* piece);
 
 

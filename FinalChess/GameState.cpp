@@ -19,4 +19,5 @@ GameState::GameState() {
 
 	// flag if any changes in GUI
 	guiHasChanged = true; // first draw
+	isBlended = false;
 }
