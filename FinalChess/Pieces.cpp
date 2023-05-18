@@ -489,7 +489,7 @@ bool Pawn::move(vector<vector<Piece*>>& piecesOnBoard, int newX, int newY) {
 		if (newX - 1 >= 0 && piecesOnBoard[newX - 1][newY]
 			&& piecesOnBoard[newX - 1][newY]->id == PieceID::Pawn && piecesOnBoard[newX - 1][newY]->color != color) {
 			enPassant = true;
-		}else if (newX + 1 >= 0 && piecesOnBoard[newX + 1][newY]
+		}else if (newX + 1 < 8 && piecesOnBoard[newX + 1][newY]
 			&& piecesOnBoard[newX + 1][newY]->id == PieceID::Pawn && piecesOnBoard[newX + 1][newY]->color != color) {
 			enPassant = true;
 		}

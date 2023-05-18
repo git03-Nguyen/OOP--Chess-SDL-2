@@ -5,7 +5,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 
-enum ButtonType { HUMAN, COM, EASY, HARD, WHITE, BLACK, SETTING, UNDO, REDO, QUEEN, BISHOP, KNIGHT, ROOK, RESUME };
+enum ButtonType { HUMAN, COM, EASY, HARD, WHITE, BLACK, SETTING, UNDO, REDO, RESUME, VOLUMN, QUEEN, BISHOP, KNIGHT, ROOK, SIZE };
 
 class Button {
 public:

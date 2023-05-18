@@ -5,6 +5,7 @@ GameState::GameState() {
 	isRunning = true;
 
 	choice = 0; // Human is default
+	volumn = 50; // Default
 
 	// For MAIN_MENU, CHOOSE_COLOR, CHOOSE_OPPONENT, PLAYING, SETTING_MENU, PROMOTION, MATCH_RESULT -> choose buttons
 	focusedButton = nullptr;

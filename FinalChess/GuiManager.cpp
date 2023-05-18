@@ -26,7 +26,7 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	dotVolumnTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/dot_volumn.png");
 	
 	// new buttons
-	buttons.resize(15);
+	buttons.resize(ButtonType::SIZE);
 	for (auto& button : buttons) button = nullptr;
 	buttons[ButtonType::SETTING] = new Button(SETTING_POS_X, SETTING_POS_Y, BUTTON_SIZE, BUTTON_SIZE, ButtonType::SETTING);
 	buttons[ButtonType::SETTING]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
@@ -36,6 +36,8 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	buttons[ButtonType::REDO]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
 	buttons[ButtonType::RESUME] = new Button(RESUME_POS_X, RESUME_POS_Y, RESUME_SIZE, RESUME_SIZE, ButtonType::RESUME);
 	buttons[ButtonType::RESUME]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/resume.png");
+	buttons[ButtonType::VOLUMN] = new Button(VOLUMN_POS_X, VOLUMN_POS_Y, VOLUMN_HEIGHT, VOLUMN_WIDTH, ButtonType::VOLUMN);
+
 
 	// ...
 
@@ -64,6 +66,10 @@ GuiManager::~GuiManager() {
 	SDL_DestroyRenderer(renderer);
 	TTF_Quit();
 	IMG_Quit();
+}
+
+SDL_Renderer* GuiManager::getRenderer() const {
+	return renderer;
 }
 
 void GuiManager::render(GameState* gameState) {
@@ -168,8 +174,8 @@ void GuiManager::renderSettingMenu(GameState* gameState) {
 	SDL_RenderCopy(renderer, sliderVolumnTexture, NULL, &sliderRect);
 	/*SDL_Rect resumeRect = { 485, 165, 50, 50 };
 	SDL_RenderCopy(renderer, resumeTexture, NULL, &resumeRect);*/
-	int volumn = 6;
-	SDL_Rect dotRect = { 160 + volumn * (sliderRect.w - 45)/10.0, 322, 20, 40};
+	
+	SDL_Rect dotRect = { 160 + gameState->volumn * (sliderRect.w - 40)/100.0, 322, 20, 40};
 	SDL_RenderCopy(renderer, dotVolumnTexture, NULL, &dotRect);
 	
 	// Buttons
@@ -270,7 +276,7 @@ Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
 		return nullptr;
 
 	case State::SETTING_MENU: // Not enough
-		for (int i = ButtonType::RESUME; i <= ButtonType::RESUME; i++)
+		for (int i = ButtonType::RESUME; i <= ButtonType::VOLUMN; i++)
 			if (buttons[i]
 				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
 				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)

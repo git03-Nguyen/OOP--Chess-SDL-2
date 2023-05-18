@@ -158,7 +158,7 @@ void GameManager::handleClickOnBoard(int boardX, int boardY) {
 void GameManager::handleChoosingMove(int newX, int newY) {
 	// If choose "legal" next move -> move -> return to handleEvent() -> other turn
 	if (gameState->clickedPiece->isLegalMove(newX, newY)) {
-		if (board->movePiece(gameState->clickedPiece, newX, newY)) {
+		if (board->movePiece(gameState->clickedPiece, newX, newY, gui->getRenderer())) {
 			std::cout << "Moved to [" << newX << "][" << newY << "]" << std::endl;
 			// Before changing turn, check win/lose
 			changeTurn();
@@ -175,6 +175,8 @@ void GameManager::handleChoosingMove(int newX, int newY) {
 
 void GameManager::handleClickButton(Button* clickedButton) {
 	if (!clickedButton) return;
+
+	int x, y;
 
 	switch (clickedButton->type) {
 	case ButtonType::SETTING:
@@ -199,6 +201,12 @@ void GameManager::handleClickButton(Button* clickedButton) {
 		gameState->state = State::PLAYING;
 		break;
 
+	case ButtonType::VOLUMN:
+		cout << "Clicked volumn!" << endl;
+		SDL_GetMouseState(&x, &y);
+		gameState->volumn = (x - clickedButton->posX) * 101.0 / clickedButton->width;
+		cout << gameState->volumn << endl;
+		break;
 	// Other Buttons
 	// ...
 

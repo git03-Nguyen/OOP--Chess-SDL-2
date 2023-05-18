@@ -17,7 +17,8 @@ public:
 	Board();
 	~Board();
 	
-	bool movePiece(Piece* piece, int newX, int newY);
+	bool movePiece(Piece* piece, int newX, int newY, SDL_Renderer* renderer);
+	void promotePawn(Piece* pawn, SDL_Renderer* renderer);
 
 	void undo();
 	void redo();

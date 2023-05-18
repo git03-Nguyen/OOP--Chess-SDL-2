@@ -11,6 +11,7 @@ public:
 	bool isRunning;
 
 	int choice; // 0: human ; 1: easy AI ; 2: hard AI
+	int volumn; // 0 -> 100
 
 	// For MAIN_MENU, CHOOSE_COLOR, CHOOSE_OPPONENT, PLAYING, SETTING, PROMOTION, MATCH_RESULT -> choose buttons
 	Button* focusedButton;

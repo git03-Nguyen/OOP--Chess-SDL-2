@@ -17,6 +17,8 @@ std::ostream& operator<<(std::ostream& os, const Button& button) {
 		return os << "redo";
 	case ButtonType::RESUME:
 		return os << "resume";
+	case ButtonType::VOLUMN:
+		return os << "volumn";
 	default:
 		return os << "unknown";
 	}

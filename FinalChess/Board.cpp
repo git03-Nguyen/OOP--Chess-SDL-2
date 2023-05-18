@@ -68,11 +68,14 @@ Board::~Board() {
     }
 }
 
-bool Board::movePiece(Piece* piece, int newX, int newY) {
+bool Board::movePiece(Piece* piece, int newX, int newY, SDL_Renderer* renderer) {
     
     if (!piece->move(piecesOnBoard, newX, newY)) return false;
     
     // If pawn -> check promotion
+    if (piece->id == PieceID::Pawn && piece->posY == 0 || piece->posY == 7) {
+        promotePawn(piece, renderer);
+    }
 
     for (auto& p : allPieces) {
         p->updateTableMove(piecesOnBoard);
@@ -91,6 +94,45 @@ bool Board::movePiece(Piece* piece, int newX, int newY) {
     
 
     return true;
+}
+
+void Board::promotePawn(Piece* pawn, SDL_Renderer* renderer) {
+    int choice = 0;
+    Piece* newPiece = nullptr;
+    do {
+        cout << "PAWN PROMOTION: 1-Queen, 2-Bishop, 3-Knight, 4-Rook" << endl;
+        cin >> choice;
+    } while (choice < 1 || choice > 4);
+    switch (choice) {
+    case 1:
+        newPiece = new Queen(pawn->posX, pawn->posY, pawn->color);
+        break;
+    case 2:
+        newPiece = new Bishop(pawn->posX, pawn->posY, pawn->color);
+        break;
+    case 3:
+        newPiece = new Knight(pawn->posX, pawn->posY, pawn->color);
+        break;
+    case 4:
+        newPiece = new Rook(pawn->posX, pawn->posY, pawn->color);
+        break;
+    default:
+        break;
+    }
+
+    if (!newPiece) throw string("Error: Unsuccessful promotion!");
+    
+    for (auto& p : allPieces) {
+        if (p == pawn) {
+            p = newPiece;
+            break;
+        }
+    }
+    piecesOnBoard[newPiece->posX][newPiece->posY] = newPiece;
+    newPiece->setKing((newPiece->color == Color::White) ? wKing : bKing);
+    newPiece->setTexture(renderer);
+    delete pawn;
+    cout << "Promotion successful!" << endl;
 }
 
 void Board::undo() {

@@ -27,6 +27,10 @@
 #define RESUME_POS_X 485
 #define RESUME_POS_Y 165
 #define RESUME_SIZE 50
+#define VOLUMN_POS_X 166
+#define VOLUMN_POS_Y 333
+#define VOLUMN_WIDTH 20
+#define VOLUMN_HEIGHT 266
 
 
 
@@ -69,6 +73,7 @@ private:
 public:
 	GuiManager(SDL_Window* _window, Board* _board);
 	~GuiManager();
+	SDL_Renderer* getRenderer() const;
 
 	bool isOnBoard(int x, int y) const;
 	Button* getButton(GameState* gameState, int x, int y) const;
