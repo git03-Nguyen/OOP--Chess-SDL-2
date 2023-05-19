@@ -13,14 +13,19 @@ int GameManager::checkWinLose() const {
 }
 
 void GameManager::changeTurn() {
+	if (!player) {
+		return;
+	}
 	if ((gameState->matchResult = checkWinLose()) != 0) { // -1 or 1
 		gameState->guiHasChanged = true;
+		player = nullptr; // Disable continuing to play after winning/losing
 		gameState->state = State::MATCH_RESULT;
 	}
 	else {
 		player = ((player == player1) ? player2 : player1);
 		gameState->currentColor = player->color;
 	}
+
 }
 
 GameManager::GameManager(const char* title, int xPos, int yPos, int width, int height) {
@@ -39,10 +44,11 @@ GameManager::GameManager(const char* title, int xPos, int yPos, int width, int h
 	// Initializing models
 	board = new Board();
 	gui = new GuiManager(window, board);
+	board->renderer = gui->getRenderer();
 
 	// Players
 	player1 = new Human(Color::White);
-	player2 = new Human(Color::Black);
+	player2 = new ComAI(Color::Black, Difficulty::RANDOM);
 	player = player1; // who choose White will go first
 	
 	// gameState - flags
@@ -78,6 +84,14 @@ void GameManager::gameLoop(int fps) {
 
 		// Render GUI based on game state
 		if (gameState->guiHasChanged) gui->render(gameState);
+
+		// AI's move
+		if (player->type == PlayerType::ComAI) { 
+			SDL_Delay(500);
+			player->makeMove(board);
+			changeTurn();
+			gameState->guiHasChanged = true;
+		}
 		
 		frameTime = SDL_GetTicks() - frameStart;
 		if (frameDelay > frameTime) {
@@ -115,15 +129,15 @@ void GameManager::handleEvent() {
 
 		// Event Click 
 		if (e.type == SDL_MOUSEBUTTONDOWN) {
-			// Click on board -> highlight, choose moves
-			if (gameState->state == State::PLAYING && gui->isOnBoard(x, y)) {
+			// Click on buttons -> maybe change the GameState
+			if (gameState->clickedButton = gui->getButton(gameState, x, y)) {
+				handleClickButton(gameState->clickedButton);
+			}
+			// Click on board (human-turn) -> highlight, choose moves
+			else if (player->type == PlayerType::Human && gameState->state == State::PLAYING && gui->isOnBoard(x, y)) {
 				int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 				int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 				(!gameState->clickedPiece) ? handleClickOnBoard(boardX, boardY) : handleChoosingMove(boardX, boardY);
-			}
-			// Click on buttons -> maybe change the GameState
-			else if (gameState->clickedButton = gui->getButton(gameState, x, y)) {
-				handleClickButton(gameState->clickedButton);
 			}
 			// Click on NOT board or buttons -> empty space
 			else {
@@ -158,18 +172,26 @@ void GameManager::handleClickOnBoard(int boardX, int boardY) {
 void GameManager::handleChoosingMove(int newX, int newY) {
 	// If choose "legal" next move -> move -> return to handleEvent() -> other turn
 	if (gameState->clickedPiece->isLegalMove(newX, newY)) {
-		if (board->movePiece(gameState->clickedPiece, newX, newY, gui->getRenderer())) {
+		board->movePiece(gameState->clickedPiece, newX, newY);
+
+		if (gameState->clickedPiece->id == PieceID::Pawn && (newY == 0 || newY == 7)) { // Promotion
+			std::cout << "Promotion: [" << newX << "][" << newY << "]" << std::endl;
+			gameState->state = State::PROMOTION;
+		}
+		else { // Normal legal move
 			std::cout << "Moved to [" << newX << "][" << newY << "]" << std::endl;
 			// Before changing turn, check win/lose
+			gameState->clickedPiece = nullptr;
 			changeTurn();
 		}
+		
 	}
 	// If choose "illegal" next move -> return to handleEvent() -> pick piece again
 	else {	
 		std::cout << "Illegal move! [" << newX << "][" << newY << "]" << std::endl;
+		gameState->clickedPiece = nullptr;
 	}
 
-	gameState->clickedPiece = nullptr;
 	gameState->guiHasChanged = true;
 }
 
@@ -181,6 +203,7 @@ void GameManager::handleClickButton(Button* clickedButton) {
 	switch (clickedButton->type) {
 	case ButtonType::SETTING:
 		cout << "Clicked setting!" << endl;
+		cout << "SETTING_MENU is showing ... " << endl;
 		gameState->focusedButton = nullptr;
 		gameState->state = State::SETTING_MENU;
 		break;
@@ -207,8 +230,29 @@ void GameManager::handleClickButton(Button* clickedButton) {
 		gameState->volumn = (x - clickedButton->posX) * 101.0 / clickedButton->width;
 		cout << gameState->volumn << endl;
 		break;
+
+	case ButtonType::QUEEN:
+	case ButtonType::BISHOP:
+	case ButtonType::KNIGHT:
+	case ButtonType::ROOK:
+		cout << "Clicked Promotion!" << endl;
+		gameState->focusedButton = nullptr;
+		gameState->promotion = 1 + (clickedButton->type - ButtonType::QUEEN);
+		board->promotePawn(gameState->clickedPiece, gameState->promotion);
+		gameState->promotion = 0; gameState->clickedPiece = nullptr;
+		changeTurn();
+		gameState->state = State::PLAYING;
+		break;
+
 	// Other Buttons
 	// ...
+	case ButtonType::QUIT:
+		gameState->isRunning = false;
+		break;
+
+	case ButtonType::RESTART:
+		cout << "Restart game! " << endl;
+		break;
 
 	default:
 		break;

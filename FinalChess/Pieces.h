@@ -8,7 +8,7 @@
 
 using namespace std;
 
-enum class Color { White, Black };
+enum class Color { White, Black, None };
 
 enum class PieceID { Pawn, Rook, Knight, Bishop, Queen, King };
 

@@ -14,6 +14,8 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	if (renderer) std::cout << "Renderer created!" << std::endl; else throw "Cannot create renderer!";
 
+	buffer = nullptr;
+
 	bgTexture = IMG_LoadTexture(renderer, "../Assets/Background/background.jpg");
 	boardTexture = IMG_LoadTexture(renderer, "../Assets/Background/brown_board.jpg");
 	blackTurnTexture = IMG_LoadTexture(renderer, "../Assets/Background/black_move.png");
@@ -24,6 +26,9 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	settingBoardTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/setting_board.png"); 
 	sliderVolumnTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/slider_volumn.png");
 	dotVolumnTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/dot_volumn.png");
+
+	whiteWinTexture = IMG_LoadTexture(renderer, "../Assets/Background/white_win.png");
+	blackWinTexture = IMG_LoadTexture(renderer, "../Assets/Background/black_win.png");
 	
 	// new buttons
 	buttons.resize(ButtonType::SIZE);
@@ -34,13 +39,23 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	buttons[ButtonType::UNDO]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/undo.png");
 	buttons[ButtonType::REDO] = new Button(REDO_POS_X, REDO_POS_Y, BUTTON_SIZE, BUTTON_SIZE, ButtonType::REDO);
 	buttons[ButtonType::REDO]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/redo.png");
+
 	buttons[ButtonType::RESUME] = new Button(RESUME_POS_X, RESUME_POS_Y, RESUME_SIZE, RESUME_SIZE, ButtonType::RESUME);
 	buttons[ButtonType::RESUME]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/resume.png");
 	buttons[ButtonType::VOLUMN] = new Button(VOLUMN_POS_X, VOLUMN_POS_Y, VOLUMN_HEIGHT, VOLUMN_WIDTH, ButtonType::VOLUMN);
+	
+	buttons[ButtonType::QUIT] = new Button(0, 0, 50, 50, ButtonType::QUIT);
+	buttons[ButtonType::QUIT]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/quit.png");
+	buttons[ButtonType::RESTART] = new Button(100, 0, 50, 50, ButtonType::RESTART);
+	buttons[ButtonType::RESTART]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/restart.png");
+
+	buttons[ButtonType::QUEEN] = new Button(110, 280, 90, 90, ButtonType::QUEEN);
+	buttons[ButtonType::BISHOP] = new Button(210, 280, 90, 90, ButtonType::BISHOP);
+	buttons[ButtonType::KNIGHT] = new Button(310, 280, 90, 90, ButtonType::KNIGHT);
+	buttons[ButtonType::ROOK] = new Button(410, 280, 90, 90, ButtonType::ROOK);
 
 
 	// ...
-
 	// pieces' textures
 	for (auto& row : board->piecesOnBoard) {
 		for (auto& piece : row) {
@@ -51,6 +66,7 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 }
 
 GuiManager::~GuiManager() {
+	SDL_DestroyTexture(buffer);
 	SDL_DestroyTexture(bgTexture);
 	SDL_DestroyTexture(boardTexture);
 	SDL_DestroyTexture(blackTurnTexture);
@@ -60,6 +76,9 @@ GuiManager::~GuiManager() {
 	SDL_DestroyTexture(settingBoardTexture);
 	SDL_DestroyTexture(sliderVolumnTexture);
 	SDL_DestroyTexture(dotVolumnTexture);
+
+	SDL_DestroyTexture(whiteWinTexture);
+	SDL_DestroyTexture(blackWinTexture);
 
 	for (auto& button : buttons) if (button) delete button;
 	buttons.clear();
@@ -77,27 +96,26 @@ void GuiManager::render(GameState* gameState) {
 
 	switch (gameState->state) {
 	case State::MAIN_MENU:
-		SDL_RenderClear(renderer);
 		renderMainMenu(gameState);
 		break;
 
 	case State::CHOOSE_OPPONENT:
-		SDL_RenderClear(renderer);
 		renderChooseOpponent(gameState);
 		break;
 
 	case State::CHOOSE_DIFFICULTY:
-		SDL_RenderClear(renderer);
 		renderChooseDifficulty(gameState);
 		break;
 
 	case State::CHOOSE_COLOR:
-		SDL_RenderClear(renderer);
 		renderChooseColor(gameState);
 		break;
 
 	case State::PLAYING:
-		SDL_RenderClear(renderer);
+		if (buffer) { // Clear buffer
+			SDL_DestroyTexture(buffer);
+			buffer = nullptr;
+		}
 		renderPlaying(gameState);
 		break;
 
@@ -146,7 +164,8 @@ void GuiManager::renderChooseColor(GameState* gameState) {
 }
 
 void GuiManager::renderPlaying(GameState* gameState) {
-	gameState->isBlended = false;
+
+	SDL_RenderClear(renderer);
 
 	drawBackground();
 	drawCircleButton(buttons[ButtonType::SETTING], gameState->focusedButton);
@@ -160,58 +179,124 @@ void GuiManager::renderPlaying(GameState* gameState) {
 	
 	drawHighLight(gameState->clickedPiece);
 
+	
 }
 
 void GuiManager::renderSettingMenu(GameState* gameState) {
-	if (!gameState->isBlended) {
-		gameState->isBlended = true;
+	// Write to buffer - first time
+	if (!buffer) {
+		buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, SCREEN_WIDTH, SCREEN_HEIGHT);
+		SDL_SetRenderTarget(renderer, buffer);
+		renderPlaying(gameState);
 		addBlendLayer();
+		SDL_SetRenderTarget(renderer, NULL);
 	}
-	cout << "SETTING_MENU is showing ... " << endl;
+	// Load from buffer
+	SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, buffer, NULL, NULL);
+
 	SDL_Rect settingBoardRect = { 80, 170, 450, 300 };
 	SDL_RenderCopy(renderer, settingBoardTexture, NULL, &settingBoardRect);
 	SDL_Rect sliderRect = { 150, 320, 300, 50 };
 	SDL_RenderCopy(renderer, sliderVolumnTexture, NULL, &sliderRect);
-	/*SDL_Rect resumeRect = { 485, 165, 50, 50 };
-	SDL_RenderCopy(renderer, resumeTexture, NULL, &resumeRect);*/
 	
 	SDL_Rect dotRect = { 160 + gameState->volumn * (sliderRect.w - 40)/100.0, 322, 20, 40};
 	SDL_RenderCopy(renderer, dotVolumnTexture, NULL, &dotRect);
 	
 	// Buttons
 	drawCircleButton(buttons[ButtonType::RESUME], gameState->focusedButton, false);
-
+	drawCircleButton(buttons[ButtonType::RESTART], gameState->focusedButton, false);
+	drawCircleButton(buttons[ButtonType::QUIT], gameState->focusedButton, false);
+	
 	// ...
 
 
 }
 
 void GuiManager::renderPromotionMenu(GameState* gameState) {
-	renderPlaying(gameState);
-	addBlendLayer();
-	cout << "PROMOTION is showing ... " << endl;
+	// Write to buffer - first time
+	if (!buffer) {
+		buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, SCREEN_WIDTH, SCREEN_HEIGHT);
+		SDL_SetRenderTarget(renderer, buffer);
+		renderPlaying(gameState);
+		addBlendLayer();
+		SDL_SetRenderTarget(renderer, NULL);
+	}
+	// Load from buffer
+	SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, buffer, NULL, NULL);
+
+	// Buttons
+	
+	for (int i = ButtonType::QUEEN; i <= ButtonType::ROOK; i++) {
+		SDL_DestroyTexture(buttons[i]->texture);
+		buttons[i]->texture = nullptr;
+	}
+
+	if (gameState->clickedPiece->color == Color::White) {
+		buttons[ButtonType::QUEEN]->texture = IMG_LoadTexture(renderer, "../Assets/Pieces/QueenWhite.png");
+		buttons[ButtonType::BISHOP]->texture = IMG_LoadTexture(renderer, "../Assets/Pieces/BishopWhite.png");
+		buttons[ButtonType::KNIGHT]->texture = IMG_LoadTexture(renderer, "../Assets/Pieces/KnightWhite.png");
+		buttons[ButtonType::ROOK]->texture = IMG_LoadTexture(renderer, "../Assets/Pieces/RookWhite.png");
+	}
+	else {
+		buttons[ButtonType::QUEEN]->texture = IMG_LoadTexture(renderer, "../Assets/Pieces/QueenBlack.png");
+		buttons[ButtonType::BISHOP]->texture = IMG_LoadTexture(renderer, "../Assets/Pieces/BishopBlack.png");
+		buttons[ButtonType::KNIGHT]->texture = IMG_LoadTexture(renderer, "../Assets/Pieces/KnightBlack.png");
+		buttons[ButtonType::ROOK]->texture = IMG_LoadTexture(renderer, "../Assets/Pieces/RookBlack.png");
+	}
+
+
+	drawCircleButton(buttons[ButtonType::QUEEN], gameState->focusedButton, false);
+	drawCircleButton(buttons[ButtonType::BISHOP], gameState->focusedButton, false);
+	drawCircleButton(buttons[ButtonType::KNIGHT], gameState->focusedButton, false);
+	drawCircleButton(buttons[ButtonType::ROOK], gameState->focusedButton, false);
+	
+
 	// ...
+
+
+
 }
 
 void GuiManager::renderMatchResult(GameState* gameState) {
-	renderPlaying(gameState);
-	addBlendLayer();
-	cout << "MATCH_RESULT is showing ... " << endl;
-	// Result ....
+	// Write to buffer - first time
+	if (!buffer) {
+		buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, SCREEN_WIDTH, SCREEN_HEIGHT);
+		SDL_SetRenderTarget(renderer, buffer);
+		renderPlaying(gameState);
+		addBlendLayer();
+		SDL_SetRenderTarget(renderer, NULL);
+	}
+	// Load from buffer
+	SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, buffer, NULL, NULL);
+	SDL_Rect resBoard;
+	SDL_Texture* winTexture = nullptr;
+
 	if (gameState->matchResult == 1) {
-		cout << "WHITE WINS!!!!!!!!!!!!" << endl;
+		resBoard = { 80, 170, 450, 260 };
+		winTexture = whiteWinTexture;
 	}
 	else if (gameState->matchResult == -1) {
-		cout << "BLACK WINS!!!!!!!!!!!!!" << endl;
+		resBoard = { 80, 170, 450, 260 };
+		winTexture = blackWinTexture;
 	}
 	else {
-		cout << "I DON'T KNOW WHO WINS!!!!" << endl;
+		throw string("I DON'T KNOW WHO WINS!");
 	}
+
+	SDL_RenderCopy(renderer, winTexture, NULL, &resBoard);
+
+
+	// Buttons...
+	drawCircleButton(buttons[ButtonType::RESUME], gameState->focusedButton, false);
+
 }
 
 void GuiManager::addBlendLayer() const {
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 80);
 	SDL_Rect rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 	SDL_RenderFillRect(renderer, &rect);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
@@ -276,7 +361,7 @@ Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
 		return nullptr;
 
 	case State::SETTING_MENU: // Not enough
-		for (int i = ButtonType::RESUME; i <= ButtonType::VOLUMN; i++)
+		for (int i = ButtonType::VOLUMN; i <= ButtonType::RESUME; i++)
 			if (buttons[i]
 				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
 				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
@@ -284,7 +369,7 @@ Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
 		return nullptr;
 
 	case State::PROMOTION:
-		for (int i = ButtonType::QUEEN; i <= ButtonType::ROOK; i++)
+		for (int i = ButtonType::RESUME; i <= ButtonType::ROOK; i++)
 			if (buttons[i]
 				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
 				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
@@ -292,7 +377,12 @@ Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
 		return nullptr;
 
 	case State::MATCH_RESULT:
-		return nullptr; // not implemented yet
+		for (int i = ButtonType::RESUME; i <= ButtonType::RESUME; i++)
+			if (buttons[i]
+				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
+				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
+				return buttons[i];
+		return nullptr;
 
 	default:
 		return nullptr;

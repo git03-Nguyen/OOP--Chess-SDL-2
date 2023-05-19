@@ -6,6 +6,7 @@ GameState::GameState() {
 
 	choice = 0; // Human is default
 	volumn = 50; // Default
+	promotion = 0; // No promotion
 
 	// For MAIN_MENU, CHOOSE_COLOR, CHOOSE_OPPONENT, PLAYING, SETTING_MENU, PROMOTION, MATCH_RESULT -> choose buttons
 	focusedButton = nullptr;
@@ -20,5 +21,4 @@ GameState::GameState() {
 
 	// flag if any changes in GUI
 	guiHasChanged = true; // first draw
-	isBlended = false;
 }

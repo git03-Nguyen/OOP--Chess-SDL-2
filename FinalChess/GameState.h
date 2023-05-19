@@ -12,6 +12,7 @@ public:
 
 	int choice; // 0: human ; 1: easy AI ; 2: hard AI
 	int volumn; // 0 -> 100
+	int promotion; // 1-Queen, 2-Bishop, 3-Knight, 4-Rook
 
 	// For MAIN_MENU, CHOOSE_COLOR, CHOOSE_OPPONENT, PLAYING, SETTING, PROMOTION, MATCH_RESULT -> choose buttons
 	Button* focusedButton;
@@ -26,7 +27,6 @@ public:
 	
 	// flag if any changes in GUI
 	bool guiHasChanged;
-	bool isBlended;
 };
 
 

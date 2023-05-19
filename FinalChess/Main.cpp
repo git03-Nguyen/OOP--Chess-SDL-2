@@ -5,6 +5,8 @@ int main(int argc, char* argv[]) {
 	GameManager* gameManager = nullptr;
 	int errorCode = 0;
 
+	srand(time(NULL));
+
 	try {
 		gameManager = new GameManager("Chess", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 690, 600);
 		gameManager->gameLoop(60);

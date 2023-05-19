@@ -1,5 +1,7 @@
 #pragma once
 #include "Board.h"
+#include <vector>
+using namespace std;
 
 enum class PlayerType { Human, ComAI };
 
@@ -8,7 +10,7 @@ public:
     PlayerType type;
     Color color;
     Player(Color _color);
-    virtual void makeMove(Board& board) = 0;
+    virtual void makeMove(Board* board) = 0;
 
 };
 
@@ -17,7 +19,7 @@ public:
 class Human : public Player {
 public:
     Human(Color _color);
-    void makeMove(Board& board) override;
+    void makeMove(Board* board) override;
 };
 
 // ----------------------------------------
@@ -28,9 +30,9 @@ class ComAI : public Player {
 public:
     Difficulty diff;
     ComAI(Color _color, Difficulty _diff = Difficulty::RANDOM);
-    void makeMove(Board& board) override;
-    void makeRandomMove(Board& board) const;
-    void makeHardMove(Board& board)const;
+    void makeMove(Board* board) override;
+    void makeRandomMove(Board* board) const;
+    void makeHardMove(Board* board)const;
 
 
 };

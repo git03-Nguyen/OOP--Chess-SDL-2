@@ -40,6 +40,7 @@ private:
 	
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+	SDL_Texture* buffer;
 
 	// some textures
 	SDL_Texture* bgTexture; 
@@ -53,6 +54,10 @@ private:
 	SDL_Texture* settingBoardTexture;
 	SDL_Texture* sliderVolumnTexture;
 	SDL_Texture* dotVolumnTexture;
+
+	// Match-result textures
+	SDL_Texture* whiteWinTexture;
+	SDL_Texture* blackWinTexture;
 
 	// buttons
 	vector<Button*> buttons;

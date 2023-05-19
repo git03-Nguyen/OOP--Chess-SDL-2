@@ -28,7 +28,7 @@ void Board::setStartBoard() {
     }
 }
 
-Board::Board() {
+Board::Board(SDL_Renderer* renderer) {
     allPieces.push_back(new Rook(0, 0, Color::Black));
     allPieces.push_back(new Knight(1, 0, Color::Black));
     allPieces.push_back(new Bishop(2, 0, Color::Black));
@@ -58,6 +58,8 @@ Board::Board() {
         row.resize(8);
     }
     setStartBoard();
+
+    
 }
 
 Board::~Board() {
@@ -68,41 +70,27 @@ Board::~Board() {
     }
 }
 
-bool Board::movePiece(Piece* piece, int newX, int newY, SDL_Renderer* renderer) {
+bool Board::movePiece(Piece* piece, int newX, int newY) {
     
     if (!piece->move(piecesOnBoard, newX, newY)) return false;
-    
-    // If pawn -> check promotion
-    if (piece->id == PieceID::Pawn && piece->posY == 0 || piece->posY == 7) {
-        promotePawn(piece, renderer);
-    }
 
     for (auto& p : allPieces) {
         p->updateTableMove(piecesOnBoard);
     }
 
-    // UPdate table move for 2 kings (cuz king must know enemies' attack range before moving)
     if (bKing->isBeingAttacked(piecesOnBoard, bKing->color)) {
             cout << "BLACK in CHECK!" << endl;
     }
-    bKing->updateTableMove(piecesOnBoard);
-
     if (wKing->isBeingAttacked(piecesOnBoard, wKing->color)) {
-        cout << "BLACK in CHECK!" << endl;
+        cout << "WHITE in CHECK!" << endl;
     }
-    wKing->updateTableMove(piecesOnBoard);
-    
 
     return true;
 }
 
-void Board::promotePawn(Piece* pawn, SDL_Renderer* renderer) {
-    int choice = 0;
+void Board::promotePawn(Piece* pawn, int choice) {
     Piece* newPiece = nullptr;
-    do {
-        cout << "PAWN PROMOTION: 1-Queen, 2-Bishop, 3-Knight, 4-Rook" << endl;
-        cin >> choice;
-    } while (choice < 1 || choice > 4);
+
     switch (choice) {
     case 1:
         newPiece = new Queen(pawn->posX, pawn->posY, pawn->color);
@@ -128,10 +116,23 @@ void Board::promotePawn(Piece* pawn, SDL_Renderer* renderer) {
             break;
         }
     }
-    piecesOnBoard[newPiece->posX][newPiece->posY] = newPiece;
+    
+    piecesOnBoard[pawn->posX][pawn->posY] = newPiece;
     newPiece->setKing((newPiece->color == Color::White) ? wKing : bKing);
     newPiece->setTexture(renderer);
     delete pawn;
+
+    for (auto& p : allPieces) {
+        p->updateTableMove(piecesOnBoard);
+    }
+
+    if (bKing->isBeingAttacked(piecesOnBoard, bKing->color)) {
+        cout << "BLACK in CHECK!" << endl;
+    }
+    if (wKing->isBeingAttacked(piecesOnBoard, wKing->color)) {
+        cout << "WHITE in CHECK!" << endl;
+    }
+
     cout << "Promotion successful!" << endl;
 }
 

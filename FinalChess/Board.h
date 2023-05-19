@@ -13,12 +13,13 @@ private:
 	void setStartBoard();
 
 public:
+	SDL_Renderer* renderer;
 	std::vector<std::vector<Piece*>> piecesOnBoard;
-	Board();
+	Board(SDL_Renderer* renderer = nullptr);
 	~Board();
 	
-	bool movePiece(Piece* piece, int newX, int newY, SDL_Renderer* renderer);
-	void promotePawn(Piece* pawn, SDL_Renderer* renderer);
+	bool movePiece(Piece* piece, int newX, int newY);
+	void promotePawn(Piece* pawn, int choice);
 
 	void undo();
 	void redo();
