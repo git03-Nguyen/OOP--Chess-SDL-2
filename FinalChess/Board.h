@@ -9,13 +9,13 @@ class Board {
 private:
 	Piece* bKing;
 	Piece* wKing;
-	std::vector<Piece*> allPieces;
-	void setStartBoard();
+	void parseFEN(const char* fen);
 
 public:
 	SDL_Renderer* renderer;
 	std::vector<std::vector<Piece*>> piecesOnBoard;
-	Board(SDL_Renderer* renderer = nullptr);
+
+	Board(const char* fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	~Board();
 	
 	bool movePiece(Piece* piece, int newX, int newY);

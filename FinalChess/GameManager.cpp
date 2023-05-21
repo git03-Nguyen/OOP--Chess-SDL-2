@@ -28,6 +28,20 @@ void GameManager::changeTurn() {
 
 }
 
+void GameManager::initialize() {
+	// Initializing models
+	board = new Board();
+	gui = new GuiManager(window, board);
+	board->renderer = gui->getRenderer();
+
+	// gameState - flags
+	gameState = new GameState();
+
+	player = player1;
+
+	
+}
+
 GameManager::GameManager(const char* title, int xPos, int yPos, int width, int height) {
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) throw SDL_GetError();
@@ -41,19 +55,8 @@ GameManager::GameManager(const char* title, int xPos, int yPos, int width, int h
 	BOARD_SIZE = SCREEN_HEIGHT - 2 * BOARD_OFFSET;
 	CELL_SIZE = round((BOARD_SIZE - 2 * BOARD_BORDER) / 8.0f);
 
-	// Initializing models
-	board = new Board();
-	gui = new GuiManager(window, board);
-	board->renderer = gui->getRenderer();
-
-	// Players
-	player1 = new Human(Color::White);
-	player2 = new ComAI(Color::Black, Difficulty::RANDOM);
-	player = player1; // who choose White will go first
-	
-	// gameState - flags
-	gameState = new GameState();
-	
+	player1 = new Human(Color::White); // 1st player is always human
+	initialize();
 	// First time rendering
 	gui->render(gameState);
 
@@ -86,11 +89,12 @@ void GameManager::gameLoop(int fps) {
 		if (gameState->guiHasChanged) gui->render(gameState);
 
 		// AI's move
-		if (player->type == PlayerType::ComAI) { 
+		if (player && player->type == PlayerType::ComAI) { 
 			SDL_Delay(500);
 			player->makeMove(board);
 			changeTurn();
 			gameState->guiHasChanged = true;
+			gui->render(gameState);
 		}
 		
 		frameTime = SDL_GetTicks() - frameStart;
@@ -134,7 +138,7 @@ void GameManager::handleEvent() {
 				handleClickButton(gameState->clickedButton);
 			}
 			// Click on board (human-turn) -> highlight, choose moves
-			else if (player->type == PlayerType::Human && gameState->state == State::PLAYING && gui->isOnBoard(x, y)) {
+			else if (player && player->type == PlayerType::Human && gameState->state == State::PLAYING && gui->isOnBoard(x, y)) {
 				int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 				int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 				(!gameState->clickedPiece) ? handleClickOnBoard(boardX, boardY) : handleChoosingMove(boardX, boardY);
@@ -247,11 +251,31 @@ void GameManager::handleClickButton(Button* clickedButton) {
 	// Other Buttons
 	// ...
 	case ButtonType::QUIT:
-		gameState->isRunning = false;
+		cout << "Return to menu!" << endl;
+		delete gui, board, gameState, player2;
+		initialize();
 		break;
 
 	case ButtonType::RESTART:
 		cout << "Restart game! " << endl;
+		delete gui, board, gameState;
+		initialize();
+		gameState->state = State::PLAYING;
+		break;
+
+	case ButtonType::LOAD:
+		cout << "Resume old games!" << endl;
+		break;
+
+	case ButtonType::HUMAN:
+		cout << "PVP!" << endl;
+		player2 = new Human(Color::Black);
+		gameState->state = State::PLAYING;
+		break;
+	case ButtonType::COM:
+		cout << "PVE!" << endl;
+		player2 = new ComAI(Color::Black, Difficulty::RANDOM);
+		gameState->state = State::PLAYING;
 		break;
 
 	default:

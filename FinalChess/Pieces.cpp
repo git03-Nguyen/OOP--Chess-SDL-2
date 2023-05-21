@@ -395,7 +395,7 @@ void King::addCastlingMove(vector<vector<Piece*>>& piecesOnBoard) {
 	if (piecesOnBoard[0][posY] && piecesOnBoard[0][posY]->id == PieceID::Rook && piecesOnBoard[0][posY]->color == color) {
 		Rook* rook = dynamic_cast<Rook*>(piecesOnBoard[0][posY]);
 		if (rook->canCastling && !this->isBeingAttacked(piecesOnBoard,color)) {
-			for (int i = 1; i < 4; i++) {
+			for (int i = 2; i < 4; i++) {
 				if (piecesOnBoard[i][posY] || isBeingAttacked(piecesOnBoard, color, i, posY)) {
 					flag = false;
 					break;

@@ -23,6 +23,8 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	nextMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/next_move.png");
 	killingMoveTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/killing_move.png");
 
+	mainMenuTexture = IMG_LoadTexture(renderer, "../Assets/Background/main_menu.png");
+
 	settingBoardTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/setting_board.png"); 
 	sliderVolumnTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/slider_volumn.png");
 	dotVolumnTexture = IMG_LoadTexture(renderer, "../Assets/Buttons/dot_volumn.png");
@@ -31,8 +33,18 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	blackWinTexture = IMG_LoadTexture(renderer, "../Assets/Background/black_win.png");
 	
 	// new buttons
+
 	buttons.resize(ButtonType::SIZE);
 	for (auto& button : buttons) button = nullptr;
+
+	buttons[ButtonType::LOAD] = new Button(310, 280, 100, 50, ButtonType::LOAD);
+	buttons[ButtonType::LOAD]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/load.png");
+	buttons[ButtonType::HUMAN] = new Button(305, 350, 100, 50, ButtonType::HUMAN);
+	buttons[ButtonType::HUMAN]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/pvp.png");
+	buttons[ButtonType::COM] = new Button(305, 420, 100, 50, ButtonType::COM);
+	buttons[ButtonType::COM]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/pve.png");
+
+
 	buttons[ButtonType::SETTING] = new Button(SETTING_POS_X, SETTING_POS_Y, BUTTON_SIZE, BUTTON_SIZE, ButtonType::SETTING);
 	buttons[ButtonType::SETTING]->texture = IMG_LoadTexture(renderer, "../Assets/Buttons/settings.png");
 	buttons[ButtonType::UNDO] = new Button(UNDO_POS_X, UNDO_POS_Y, BUTTON_SIZE, BUTTON_SIZE, ButtonType::UNDO);
@@ -73,6 +85,8 @@ GuiManager::~GuiManager() {
 	SDL_DestroyTexture(whiteTurnTexture);
 	SDL_DestroyTexture(nextMoveTexture);
 
+	SDL_DestroyTexture(mainMenuTexture);
+
 	SDL_DestroyTexture(settingBoardTexture);
 	SDL_DestroyTexture(sliderVolumnTexture);
 	SDL_DestroyTexture(dotVolumnTexture);
@@ -97,10 +111,6 @@ void GuiManager::render(GameState* gameState) {
 	switch (gameState->state) {
 	case State::MAIN_MENU:
 		renderMainMenu(gameState);
-		break;
-
-	case State::CHOOSE_OPPONENT:
-		renderChooseOpponent(gameState);
 		break;
 
 	case State::CHOOSE_DIFFICULTY:
@@ -143,17 +153,17 @@ void GuiManager::render(GameState* gameState) {
 }
 
 void GuiManager::renderMainMenu(GameState* gameState) {
-	cout << "SETTING_MENU is showing ... " << endl;
-	// ...
-}
+	cout << "MAIN_MENU is showing ... " << endl;
+	SDL_RenderClear(renderer);
+	drawBackground(gameState->state);
 
-void GuiManager::renderChooseOpponent(GameState* gameState) {
-	cout << "CHOOSE_OPPONENT is showing ... " << endl;
+	drawCircleButton(buttons[ButtonType::LOAD], gameState->focusedButton, false);
+	drawCircleButton(buttons[ButtonType::HUMAN], gameState->focusedButton, false);
+	drawCircleButton(buttons[ButtonType::COM], gameState->focusedButton, false);
 	// ...
 }
 
 void GuiManager::renderChooseDifficulty(GameState* gameState) {
-	renderChooseOpponent(gameState);
 	cout << "CHOOOSE_DIFFICULTY is showing ... " << endl;
 	// ...
 }
@@ -167,7 +177,7 @@ void GuiManager::renderPlaying(GameState* gameState) {
 
 	SDL_RenderClear(renderer);
 
-	drawBackground();
+	drawBackground(gameState->state);
 	drawCircleButton(buttons[ButtonType::SETTING], gameState->focusedButton);
 	drawCircleButton(buttons[ButtonType::UNDO], gameState->focusedButton);
 	drawCircleButton(buttons[ButtonType::REDO], gameState->focusedButton);
@@ -344,9 +354,11 @@ Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
 
 	switch (gameState->state) {
 	case State::MAIN_MENU:
-		return nullptr; // not implemented yet
-		
-	case State::CHOOSE_OPPONENT:
+		for (int i = ButtonType::LOAD; i <= ButtonType::COM; i++)
+			if (buttons[i]
+				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
+				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
+				return buttons[i];
 		return nullptr; // not implemented yet
 
 	case State::CHOOSE_COLOR:
@@ -481,7 +493,12 @@ void GuiManager::drawBoard() {
 	
 }
 
-void GuiManager::drawBackground() {
+void GuiManager::drawBackground(State state) {
 	SDL_Rect bgRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-	SDL_RenderCopy(renderer, bgTexture, NULL, &bgRect);
+	if (state == State::MAIN_MENU) {
+		SDL_RenderCopy(renderer, mainMenuTexture, NULL, &bgRect);
+	}
+	else {
+		SDL_RenderCopy(renderer, bgTexture, NULL, &bgRect);
+	}
 }

@@ -1,7 +1,7 @@
 #include "GameState.h"
 
 GameState::GameState() {
-	state = State::PLAYING; // -> test: skip main menu ( _ | choose mode), choose color
+	state = State::MAIN_MENU; // 
 	isRunning = true;
 
 	choice = 0; // Human is default

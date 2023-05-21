@@ -25,7 +25,6 @@ private:
 	// control view
 	GuiManager* gui;
 
-
 	// flags almost in game state
 	GameState* gameState;
 	
@@ -33,6 +32,9 @@ private:
 
 	// uitilities
 	void changeTurn();
+
+	// init new game
+	void initialize();
 
 public:
 

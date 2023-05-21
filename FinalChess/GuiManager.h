@@ -50,6 +50,9 @@ private:
 	SDL_Texture* nextMoveTexture;
 	SDL_Texture* killingMoveTexture;
 
+	// Main menu textures
+	SDL_Texture* mainMenuTexture;
+	
 	// Setting_menu textures
 	SDL_Texture* settingBoardTexture;
 	SDL_Texture* sliderVolumnTexture;
@@ -67,7 +70,7 @@ private:
 	Board* board;
 
 	// Drawing methods
-	void drawBackground();
+	void drawBackground(State state);
 	void drawBoard();
 	void drawAllPieces();
 	void drawCurrentTurn(Color turn);
@@ -85,7 +88,6 @@ public:
 
 	void render(GameState* gameState);
 	void renderMainMenu(GameState* gameState);
-	void renderChooseOpponent(GameState* gameState);
 	void renderChooseDifficulty(GameState* gameState);
 	void renderChooseColor(GameState* gameState);
 	void renderPlaying(GameState* gameState);
