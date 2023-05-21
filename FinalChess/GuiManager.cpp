@@ -69,7 +69,7 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 
 	// ...
 	// pieces' textures
-	for (auto& row : board->piecesOnBoard) {
+	for (auto& row : board->pieces) {
 		for (auto& piece : row) {
 			if (piece) piece->setTexture(renderer);
 		}
@@ -337,7 +337,7 @@ void GuiManager::drawHighLight(Piece* clickedPiece) {
 									BOARD_OFFSET + BOARD_BORDER + Y * CELL_SIZE + CELL_SIZE / 4,
 									CELL_SIZE / 2, CELL_SIZE / 2 };
 
-			(board->piecesOnBoard[X][Y]) ? 
+			(board->pieces[X][Y]) ? 
 				SDL_RenderCopy(renderer, killingMoveTexture, NULL, &cellRect):
 				SDL_RenderCopy(renderer, nextMoveTexture, NULL, &cellRect);
 		}
@@ -414,11 +414,11 @@ bool GuiManager::isOnBoard(int x, int y) const {
 void GuiManager::drawAllPieces() {
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8;j++) {
-			if (board->piecesOnBoard[i][j]) {
-				int x = BOARD_OFFSET + BOARD_BORDER + board->piecesOnBoard[i][j]->posX * CELL_SIZE;
-				int y = BOARD_OFFSET + BOARD_BORDER + board->piecesOnBoard[i][j]->posY * CELL_SIZE;
+			if (board->pieces[i][j]) {
+				int x = BOARD_OFFSET + BOARD_BORDER + board->pieces[i][j]->posX * CELL_SIZE;
+				int y = BOARD_OFFSET + BOARD_BORDER + board->pieces[i][j]->posY * CELL_SIZE;
 				SDL_Rect pieceRect = { x, y, CELL_SIZE, CELL_SIZE };
-				SDL_RenderCopy(renderer, board->piecesOnBoard[i][j]->texture, NULL, &pieceRect);
+				SDL_RenderCopy(renderer, board->pieces[i][j]->texture, NULL, &pieceRect);
 			}
 		}
 	}

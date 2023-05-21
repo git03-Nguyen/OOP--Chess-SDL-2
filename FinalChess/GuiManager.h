@@ -65,7 +65,6 @@ private:
 	// buttons
 	vector<Button*> buttons;
 
-
 	// Board - pieces
 	Board* board;
 

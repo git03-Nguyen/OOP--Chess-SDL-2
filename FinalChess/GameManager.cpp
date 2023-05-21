@@ -1,22 +1,10 @@
 #include "GameManager.h"
 
-int GameManager::checkWinLose() const {
-	bool runOutOfMove = true;
-	for (int i = 0; i < 8 && runOutOfMove; i++) {
-		for (int j = 0; j < 8 && runOutOfMove; j++) {
-			runOutOfMove = !((board->piecesOnBoard[i][j] && board->piecesOnBoard[i][j]->color != gameState->currentColor
-				&& board->piecesOnBoard[i][j]->tableMove.size() != 0));
-		}
-	}
-	if (!runOutOfMove) return 0;
-	return (gameState->currentColor == Color::White) ? 1 : -1;
-}
-
 void GameManager::changeTurn() {
 	if (!player) {
 		return;
 	}
-	if ((gameState->matchResult = checkWinLose()) != 0) { // -1 or 1
+	if ((gameState->matchResult = board->checkWinLose()) != 0) { // -1 or 1
 		gameState->guiHasChanged = true;
 		player = nullptr; // Disable continuing to play after winning/losing
 		gameState->state = State::MATCH_RESULT;
@@ -28,16 +16,19 @@ void GameManager::changeTurn() {
 
 }
 
-void GameManager::initialize() {
+void GameManager::initialize(const char* fen) {
 	// Initializing models
-	board = new Board();
+	board = new Board(fen);
 	gui = new GuiManager(window, board);
 	board->renderer = gui->getRenderer();
 
 	// gameState - flags
 	gameState = new GameState();
+	gameState->currentColor = board->currentTurn;
 
-	player = player1;
+	player = (player1->color == board->currentTurn) ? player1 : player2;
+
+	cout << board->getFEN() << endl;
 
 	
 }
@@ -158,7 +149,7 @@ void GameManager::handleEvent() {
 // -----------------------------------------------------
 
 void GameManager::handleClickOnBoard(int boardX, int boardY) {
-	gameState->clickedPiece = board->piecesOnBoard[boardX][boardY];
+	gameState->clickedPiece = board->pieces[boardX][boardY];
 
 	if (!gameState->clickedPiece || gameState->clickedPiece->color != gameState->currentColor) {
 		// If click to INVALID piece -> return to hear event again

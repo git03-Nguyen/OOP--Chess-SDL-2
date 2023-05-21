@@ -29,7 +29,7 @@ void ComAI::makeMove(Board* board) {
 void ComAI::makeRandomMove(Board* board) const {
 	vector<Piece*> availPiece;
 	for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++) {
-		Piece* p = board->piecesOnBoard[i][j];
+		Piece* p = board->pieces[i][j];
 		if (p && p->color == color && p->tableMove.size() > 0) availPiece.push_back(p);
 	}
 

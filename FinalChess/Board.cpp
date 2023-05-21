@@ -1,6 +1,6 @@
 #include "Board.h"
 
-void Board::parseFEN(const char* fen) {    
+void Board::parseFEN(const char* fen) {
     if (!fen) return;
 
     int i = 0, x = 0, y = 0;
@@ -10,37 +10,43 @@ void Board::parseFEN(const char* fen) {
         while (x < 8) {
             if (fen[i] >= '0' && fen[i] <= '9') {
                 x += fen[i++] - '0'; continue;
-            } 
-            
+            }
+
             switch (fen[i++]) {
             case 'r':
-                piecesOnBoard[x][y] = new Rook(x, y, Color::Black); break;
+                pieces[x][y] = new Rook(x, y, Color::Black);
+                dynamic_cast<Rook*>(pieces[x][y])->canCastling = false;
+                break;
             case 'n':
-                piecesOnBoard[x][y] = new Knight(x, y, Color::Black); break;
+                pieces[x][y] = new Knight(x, y, Color::Black); break;
             case 'b':
-                piecesOnBoard[x][y] = new Bishop(x, y, Color::Black); break;
+                pieces[x][y] = new Bishop(x, y, Color::Black); break;
             case 'q':
-                piecesOnBoard[x][y] = new Queen(x, y, Color::Black); break;
+                pieces[x][y] = new Queen(x, y, Color::Black); break;
             case 'k':
-                piecesOnBoard[x][y] = new King(x, y, Color::Black);
-                if (!bKing) bKing = piecesOnBoard[x][y]; else throw string("Invalid number of Black King!");
+                pieces[x][y] = new King(x, y, Color::Black);
+                if (!bKing) bKing = dynamic_cast<King*>(pieces[x][y]);
+                else throw string("Invalid number of Black King!");
                 break;
             case 'p':
-                piecesOnBoard[x][y] = new Pawn(x, y, Color::Black); break;
+                pieces[x][y] = new Pawn(x, y, Color::Black); break;
             case 'R':
-                piecesOnBoard[x][y] = new Rook(x, y, Color::White); break;
+                pieces[x][y] = new Rook(x, y, Color::White);
+                dynamic_cast<Rook*>(pieces[x][y])->canCastling = false;
+                break;
             case 'N':
-                piecesOnBoard[x][y] = new Knight(x, y, Color::White); break;
+                pieces[x][y] = new Knight(x, y, Color::White); break;
             case 'B':
-                piecesOnBoard[x][y] = new Bishop(x, y, Color::White); break;
+                pieces[x][y] = new Bishop(x, y, Color::White); break;
             case 'Q':
-                piecesOnBoard[x][y] = new Queen(x, y, Color::White); break;
+                pieces[x][y] = new Queen(x, y, Color::White); break;
             case 'K':
-                piecesOnBoard[x][y] = new King(x, y, Color::White);
-                if (!wKing) wKing = piecesOnBoard[x][y]; else throw string("Invalid number of White King!");
+                pieces[x][y] = new King(x, y, Color::White);
+                if (!wKing) wKing = dynamic_cast<King*>(pieces[x][y]);
+                else throw string("Invalid number of White King!");
                 break;
             case 'P':
-                piecesOnBoard[x][y] = new Pawn(x, y, Color::White); break;
+                pieces[x][y] = new Pawn(x, y, Color::White); break;
             default:
                 throw string("Invalid FEN string!");
                 break;
@@ -52,14 +58,143 @@ void Board::parseFEN(const char* fen) {
             throw string("Invalid FEN string!");
         i++; y++;
     }
+
+    // Current Turn 
+    currentTurn = (fen[i] == 'w') ? Color::White : Color::Black;
+    i += 2;
+
+    // Castling white
+    while (i < strlen(fen) && fen[i] != ' ') {
+        switch (fen[i]) {
+        case 'K':
+            wKing->canCastling = dynamic_cast<Rook*>(pieces[7][7])->canCastling = true;
+            break;
+
+        case 'Q':
+            wKing->canCastling = dynamic_cast<Rook*>(pieces[0][7])->canCastling = true;
+            break;
+
+        case 'k':
+            bKing->canCastling = dynamic_cast<Rook*>(pieces[7][0])->canCastling = true;
+            break;
+
+        case 'q':
+            bKing->canCastling = dynamic_cast<Rook*>(pieces[0][0])->canCastling = true;
+            break;
+
+        default:
+            throw string("Invalid FEN string!");
+        }
+        i++;
+    }
+    i++;
+
+    // En passant
+    if (fen[i] != '-') {
+        while (i < strlen(fen) && fen[i] != ' ') {
+            i++;
+        }
+    }
+    else {
+        i++;
+    }
+    i++;
+
+    // Halfmove-clock -> 50-move-rule
+    halfMoveClock = 0;
+    while (i < strlen(fen) && fen[i] >= '0' && fen[i] <= '9') {
+        halfMoveClock = halfMoveClock * 10 + (fen[i] - '0');
+        i++;
+    }
+    cout << halfMoveClock << endl;
+    i++;
+
+    // Fullmove-clock 
+    fullMoveClock = 0;
+    while (i < strlen(fen) && fen[i] >= '0' && fen[i] <= '9') {
+        fullMoveClock = fullMoveClock * 10 + (fen[i] - '0');
+        i++;
+    }
+    cout << fullMoveClock << endl;
     
 
 }
 
+std::string Board::getFEN() const {
+    string fen = "";
+    int x = 0, y = 0, blank = 0;
+    while (y < 8) {
+        x = 0;
+        while (x < 8) {
+            if (!pieces[x][y]) blank++;
+            else {
+                if (blank) {
+                    fen += (blank + '0');
+                    blank = 0;
+                }
+                switch (pieces[x][y]->id) {
+                case PieceID::Rook:
+                    fen += (pieces[x][y]->color == Color::White) ? 'R' : 'r';
+                    break;
+                case PieceID::Knight:
+                    fen += (pieces[x][y]->color == Color::White) ? 'N' : 'n';
+                    break;
+                case PieceID::Bishop:
+                    fen += (pieces[x][y]->color == Color::White) ? 'B' : 'b';
+                    break;
+                case PieceID::Queen:
+                    fen += (pieces[x][y]->color == Color::White) ? 'Q' : 'q';
+                    break;
+                case PieceID::King:
+                    fen += (pieces[x][y]->color == Color::White) ? 'K' : 'k';
+                    break;
+                case PieceID::Pawn:
+                    fen += (pieces[x][y]->color == Color::White) ? 'P' : 'p';
+                    break;
+                }
+            }
+            x++;
+        }
+        if (blank) {
+            fen += (blank + '0');
+            blank = 0;
+        }
+        fen += '/';
+        y++;
+    }
+
+    fen.pop_back();
+    fen += ' ';
+
+    fen += (currentTurn == Color::White) ? 'w' : 'b';
+    fen += " ";
+
+    for (int i = 0; i <= 7; i += 7) for (int j = 0; j <= 7; j += 7) {
+        Rook* rook = dynamic_cast<Rook*>(pieces[j][i]);
+        if (rook && rook->canCastling) {
+            King* king = (rook->color == Color::White) ? wKing : bKing;
+            if (king->canCastling) {
+                if (rook->posX < king->posX) fen += (rook->color == Color::White) ? 'Q' : 'q';
+                else fen += (rook->color == Color::White) ? 'K' : 'k';
+            }
+        }
+    }
+    
+
+    // Enpassant
+    fen += " - ";
+
+    fen += to_string(halfMoveClock) + " ";
+
+    fen += to_string(fullMoveClock);
+
+    return fen;
+}
+
 Board::Board(const char* fen) {
 
-    piecesOnBoard.resize(8);
-    for (auto& row : piecesOnBoard) {
+    pieces.resize(8);
+    for (auto& row : pieces) {
         row.resize(8);
         for (auto& p : row) {
             p = nullptr;
@@ -68,17 +203,17 @@ Board::Board(const char* fen) {
 
     parseFEN(fen);
 
-    for (auto& row : piecesOnBoard) for (auto& p : row) {
+    for (auto& row : pieces) for (auto& p : row) {
         if (p) {
             (p->color == Color::White) ? p->setKing(wKing) : p->setKing(bKing);
-            p->updateTableMove(piecesOnBoard);
+            p->updateTableMove(pieces);
         }
     }
     
 }
 
 Board::~Board() {
-    for (auto& row : piecesOnBoard) {
+    for (auto& row : pieces) {
         for (auto& piece : row) {
             if (piece) delete piece;
         }
@@ -87,18 +222,18 @@ Board::~Board() {
 
 bool Board::movePiece(Piece* piece, int newX, int newY) {
     
-    if (!piece->move(piecesOnBoard, newX, newY)) return false;
+    if (!piece->move(pieces, newX, newY)) return false;
 
-    for (auto& row : piecesOnBoard) {
+    for (auto& row : pieces) {
         for (auto& piece : row) {
-            if (piece) piece->updateTableMove(piecesOnBoard);
+            if (piece) piece->updateTableMove(pieces);
         }
     }
 
-    if (bKing->isBeingAttacked(piecesOnBoard, bKing->color)) {
+    if (bKing->isBeingAttacked(pieces, bKing->color)) {
             cout << "BLACK in CHECK!" << endl;
     }
-    if (wKing->isBeingAttacked(piecesOnBoard, wKing->color)) {
+    if (wKing->isBeingAttacked(pieces, wKing->color)) {
         cout << "WHITE in CHECK!" << endl;
     }
 
@@ -127,28 +262,41 @@ void Board::promotePawn(Piece* pawn, int choice) {
 
     if (!newPiece) throw string("Error: Unsuccessful promotion!");
     
-    piecesOnBoard[pawn->posX][pawn->posY] = newPiece;
+    pieces[pawn->posX][pawn->posY] = newPiece;
     newPiece->setKing((newPiece->color == Color::White) ? wKing : bKing);
     newPiece->setTexture(renderer);
     delete pawn;
 
-    for (auto& row : piecesOnBoard) {
+    for (auto& row : pieces) {
         for (auto& piece : row) {
-            if (piece) piece->updateTableMove(piecesOnBoard);
+            if (piece) piece->updateTableMove(pieces);
         }
     }
 
-    if (bKing->isBeingAttacked(piecesOnBoard, bKing->color)) {
+    if (bKing->isBeingAttacked(pieces, bKing->color)) {
         cout << "BLACK in CHECK!" << endl;
     }
-    if (wKing->isBeingAttacked(piecesOnBoard, wKing->color)) {
+    if (wKing->isBeingAttacked(pieces, wKing->color)) {
         cout << "WHITE in CHECK!" << endl;
     }
 
     cout << "Promotion successful!" << endl;
 }
 
+int Board::checkWinLose() const {
+    bool runOutOfMove = true;
+    for (int i = 0; i < 8 && runOutOfMove; i++) {
+        for (int j = 0; j < 8 && runOutOfMove; j++) {
+            runOutOfMove = !((pieces[i][j] && pieces[i][j]->color != currentTurn
+                && pieces[i][j]->tableMove.size() != 0));
+        }
+    }
+    if (!runOutOfMove) return 0;
+    return (currentTurn == Color::White) ? 1 : -1;
+}
+
 void Board::undo() {
+
 }
 
 void Board::redo() {

@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 #include <SDL.h>
 #include <iostream>
 
@@ -7,19 +8,24 @@
 
 class Board {
 private:
-	Piece* bKing;
-	Piece* wKing;
+	King* bKing;
+	King* wKing;
 	void parseFEN(const char* fen);
 
 public:
 	SDL_Renderer* renderer;
-	std::vector<std::vector<Piece*>> piecesOnBoard;
+	std::vector<std::vector<Piece*>> pieces;
+	std::string getFEN() const;
+	Color currentTurn;
+	int halfMoveClock;
+	int fullMoveClock;
 
-	Board(const char* fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	Board(const char* fen);
 	~Board();
 	
 	bool movePiece(Piece* piece, int newX, int newY);
 	void promotePawn(Piece* pawn, int choice);
+	int checkWinLose() const;
 
 	void undo();
 	void redo();

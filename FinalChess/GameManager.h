@@ -27,14 +27,14 @@ private:
 
 	// flags almost in game state
 	GameState* gameState;
-	
-	int checkWinLose() const;
 
 	// uitilities
 	void changeTurn();
 
 	// init new game
-	void initialize();
+	void initialize(const char* fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+
 
 public:
 
