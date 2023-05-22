@@ -61,11 +61,7 @@ GameManager::~GameManager() {
 
 // ----------------------------------------
 // The only loop in the game is here
-void GameManager::gameLoop(int fps) {
-
-	int frameDelay = 1000 / fps;
-	Uint32 frameStart = 0;
-	int frameTime = 0;
+void GameManager::gameLoop() {
 
 	while (gameState->isRunning) {
 		frameStart = SDL_GetTicks();
@@ -87,11 +83,7 @@ void GameManager::gameLoop(int fps) {
 			gameState->guiHasChanged = true;
 			gui->render(gameState);
 		}
-		
-		frameTime = SDL_GetTicks() - frameStart;
-		if (frameDelay > frameTime) {
-			SDL_Delay(frameDelay - frameTime);
-		}
+
 	}
 }
 

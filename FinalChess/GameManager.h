@@ -41,7 +41,7 @@ public:
 	GameManager(const char* title, int xPos, int yPos, int width, int height);
 	~GameManager();
 
-	void gameLoop(int fps);
+	void gameLoop();
 
 	void handleEvent();
 	

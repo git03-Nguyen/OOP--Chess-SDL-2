@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
 
 	try {
 		gameManager = new GameManager("Chess", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 690, 600);
-		gameManager->gameLoop(60);
+		gameManager->gameLoop();
 	}
 	catch (std::exception e) {
 		std::cerr << "ERROR: " << e.what() << "\n";
