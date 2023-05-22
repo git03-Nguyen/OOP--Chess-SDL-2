@@ -64,7 +64,6 @@ GameManager::~GameManager() {
 void GameManager::gameLoop() {
 
 	while (gameState->isRunning) {
-		frameStart = SDL_GetTicks();
 
 		// Handle events (quit game, move mouse around (hover button), 
 		//				click mouse (on board (pieces, no pieces, moves, invalid moves),
