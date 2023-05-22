@@ -8,13 +8,15 @@
 
 class Board {
 private:
-	King* bKing;
-	King* wKing;
 	void parseFEN(const char* fen);
 
 public:
 	SDL_Renderer* renderer;
 	std::vector<std::vector<Piece*>> pieces;
+
+	King* bKing;
+	King* wKing;
+
 	std::string getFEN() const;
 	vector<string> history;
 	vector<string> redoHistory;
@@ -26,6 +28,7 @@ public:
 	~Board();
 	
 	bool movePiece(Piece* piece, int newX, int newY);
+	void updateTableMoves();
 	void promotePawn(Piece* pawn, int choice);
 	int checkWinLose() const;
 

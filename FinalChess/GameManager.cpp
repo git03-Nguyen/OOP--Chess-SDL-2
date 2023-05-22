@@ -65,7 +65,7 @@ GameManager::~GameManager() {
 void GameManager::gameLoop() {
 
 	while (gameState->isRunning) {
-
+		
 		// Handle events (quit game, move mouse around (hover button), 
 		//				click mouse (on board (pieces, no pieces, moves, invalid moves),
 		//							on button (main menu, choose mode menu, playing game, promotion, match result, setting menu ) ),
@@ -77,7 +77,7 @@ void GameManager::gameLoop() {
 
 		// AI's move
 		if (player && player->type == PlayerType::ComAI) { 
-			SDL_Delay(500);
+			if (dynamic_cast<ComAI*>(player)->diff == Difficulty::RANDOM) SDL_Delay(300);
 			player->makeMove(board);
 			changeTurn();
 			gameState->guiHasChanged = true;
@@ -322,7 +322,7 @@ void GameManager::handleClickButton(Button* clickedButton) {
 
 	case ButtonType::COM:
 		cout << "PVE!" << endl;
-		player2 = new ComAI(Color::Black, Difficulty::RANDOM);
+		player2 = new ComAI(Color::Black, Difficulty::HARD); 
 		newGameBoard();
 		gameState->state = State::PLAYING;
 		break;

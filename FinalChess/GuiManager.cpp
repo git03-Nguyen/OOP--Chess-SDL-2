@@ -413,7 +413,7 @@ bool GuiManager::isOnBoard(int x, int y) const {
 
 void GuiManager::drawAllPieces() {
 	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8;j++) {
+		for (int j = 0; j < 8; j++) {
 			if (board->pieces[i][j]) {
 				int x = BOARD_OFFSET + BOARD_BORDER + board->pieces[i][j]->posX * CELL_SIZE;
 				int y = BOARD_OFFSET + BOARD_BORDER + board->pieces[i][j]->posY * CELL_SIZE;

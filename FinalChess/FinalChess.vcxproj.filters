@@ -13,11 +13,11 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Resource Files\Pieces">
-      <UniqueIdentifier>{45877f2f-93c9-4ceb-8bb0-fd5d8320e500}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\Buttons">
       <UniqueIdentifier>{44162b30-02d9-4fcb-b580-357076c4b268}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Pieces">
+      <UniqueIdentifier>{45877f2f-93c9-4ceb-8bb0-fd5d8320e500}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

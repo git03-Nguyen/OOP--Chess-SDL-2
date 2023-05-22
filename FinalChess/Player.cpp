@@ -14,9 +14,212 @@ void Human::makeMove(Board* board) {
 
 ComAI::ComAI(Color _color, Difficulty _diff) : Player(_color), diff(_diff) {
 	this->type = PlayerType::ComAI;
+	if (diff == Difficulty::HARD) {
+		initEvaluation();
+	}
+}
+
+ComAI::~ComAI() {
+	for (auto& eval : evals) {
+		for (int i = 0; i < 8; i++) delete eval[i];
+		delete eval;
+	}
+}
+
+int ComAI::evaluate(Board* board) const {
+	if (diff == Difficulty::RANDOM) return 0;
+	int balance = 0;
+
+	
+	// Evaluation calculation
+	int wQueen = 0, wPawn = 0, bQueen = 0, bPawn = 0;
+	bool isEndGame = true;
+	for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++) {
+		if (board->pieces[i][j]) {
+			if (board->pieces[i][j]->id != PieceID::King) {
+				int eval = evals[(int)board->pieces[i][j]->id][i][j];
+				balance += (board->pieces[i][j]->color == Color::White) ? eval : -eval;
+
+				if (isEndGame) {
+					if (board->pieces[i][j]->id == PieceID::Queen) 
+						(board->pieces[i][j]->color == Color::White) ? wQueen++ : bQueen++;
+					else if (board->pieces[i][j]->id == PieceID::Pawn) 
+						(board->pieces[i][j]->color == Color::White) ? wPawn++ : bPawn++;
+					else 
+						isEndGame = false;
+				}
+
+			}
+		}
+	}
+	
+	isEndGame = false;
+	balance += evals[5 + (int)isEndGame][board->wKing->posX][board->wKing->posY];
+	balance -= evals[5 + (int)isEndGame][board->bKing->posX][board->bKing->posY];
+
+	return balance;
+
+}
+
+int countMinimax = 0; // Testttttttttttt
+
+int ComAI::minimax(Board* board, int depth, int alpha, int beta, bool maximizingPlayer) {
+	if (depth == 0) {
+		return evaluate(board);
+	}
+
+	countMinimax++; //Testttttttttttttttt
+
+	bool isContinue = true;
+	if (maximizingPlayer) {
+		int maxEval = INT_MIN;
+		for (int i = 0; i < 8 && isContinue; i++) for (int j = 0 && isContinue; j < 8; j++) {
+			Piece* p = board->pieces[i][j];
+			if (p && p->color != color && p->tableMove.size() > 0) {
+				std::vector<std::vector<std::vector<int>>> oldTableMoves;
+				oldTableMoves.resize(8);
+				for (int m = 0; m < 8; m++) {
+					oldTableMoves[m].resize(8);
+					for (int n = 0; n < 8; n++) {
+						if (board->pieces[m][n]) {
+							oldTableMoves[m][n] = board->pieces[m][n]->tableMove;
+						}
+					}
+				}
+				for (int index = 0; index < p->tableMove.size(); index += 2) {
+					int x = p->tableMove[index];
+					int y = p->tableMove[index + 1];
+
+					// Try to move
+					Piece* temp = board->pieces[x][y];
+					board->pieces[x][y] = p;
+					board->pieces[i][j] = nullptr;
+					board->updateTableMoves();
+					// Calculate eval
+					int eval = minimax(board, depth - 1, alpha, beta, false); // false -> ...
+					maxEval = (eval > maxEval) ? eval : maxEval;
+					alpha = (eval > alpha) ? eval : alpha;
+					// Undo the move
+					board->pieces[x][y] = temp;
+					board->pieces[i][j] = p;
+					for (int m = 0; m < 8; m++) for (int n = 0; n < 8; n++) {
+						if (board->pieces[m][n]) {
+							board->pieces[m][n]->tableMove = oldTableMoves[m][n];
+						}
+					}
+					if (beta <= alpha) {
+						isContinue = false;
+						break;
+					}// alpha-beta prunning
+				}
+			}
+		}
+		return maxEval;
+	}
+	else {
+		int minEval = INT_MAX;
+		for (int i = 0; i < 8 && isContinue; i++) for (int j = 0; j < 8 && isContinue; j++) {
+			Piece* p = board->pieces[i][j];
+			if (p && p->color == color && p->tableMove.size() > 0) {
+				std::vector<std::vector<std::vector<int>>> oldTableMoves;
+				oldTableMoves.resize(8);
+				for (int m = 0; m < 8; m++) {
+					oldTableMoves[m].resize(8);
+					for (int n = 0; n < 8; n++) {
+						if (board->pieces[m][n]) {
+							oldTableMoves[m][n] = board->pieces[m][n]->tableMove;
+						}
+					}
+				}
+				for (int index = 0; index < p->tableMove.size(); index += 2) {
+					int x = p->tableMove[index];
+					int y = p->tableMove[index + 1];
+
+					// Try to move
+					Piece* temp = board->pieces[x][y];
+					board->pieces[x][y] = p;
+					board->pieces[i][j] = nullptr;
+					board->updateTableMoves();
+					// Calculate eval
+					int eval = minimax(board, depth - 1, alpha, beta, true); // false -> ...
+					minEval = (eval < minEval) ? eval : minEval;
+					beta = (eval < beta) ? eval : beta;
+					// Undo the move
+					board->pieces[x][y] = temp;
+					board->pieces[i][j] = p;
+					for (int m = 0; m < 8; m++) for (int n = 0; n < 8; n++) {
+						if (board->pieces[m][n]) {
+							board->pieces[m][n]->tableMove = oldTableMoves[m][n];
+						}
+					}
+					if (beta <= alpha) {
+						isContinue = false; 
+						break; // alpha-beta prunning
+					}
+				}
+			}
+		}
+		return minEval;
+	}
+}
+
+void ComAI::getBestMove(Piece*& bestPiece, int& bestX, int& bestY, Board* board, int depth) {
+	int minEval = INT_MAX;
+	int alpha = INT_MIN;
+	int beta = INT_MAX;
+
+	countMinimax = 0;
+
+	for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++) {
+		Piece* p = board->pieces[i][j];
+		if (p && p->color == color && p->tableMove.size() > 0) {
+			std::vector<std::vector<std::vector<int>>> oldTableMoves;
+			oldTableMoves.resize(8);
+			for (int m = 0; m < 8; m++) {
+				oldTableMoves[m].resize(8);
+				for (int n = 0; n < 8; n++) {
+					if (board->pieces[m][n]) {
+						oldTableMoves[m][n] = board->pieces[m][n]->tableMove;
+					}
+				}
+			}
+			for (int index = 0; index < p->tableMove.size(); index += 2) {
+				int x = p->tableMove[index];
+				int y = p->tableMove[index + 1];
+
+				// Try to move
+				Piece* temp = board->pieces[x][y];
+				board->pieces[x][y] = p;
+				board->pieces[i][j] = nullptr;
+				board->updateTableMoves();
+				// Calculate eval
+				int eval = minimax(board, depth, alpha, beta, true); // true -> maximizing -> human
+				if (eval < minEval) {
+					minEval = eval;
+					bestPiece = p;
+					bestX = x;
+					bestY = y;
+				}
+				// Undo the move
+				board->pieces[x][y] = temp;
+				board->pieces[i][j] = p;
+				for (int m = 0; m < 8; m++) for (int n = 0; n < 8; n++) {
+					if (board->pieces[m][n]) {
+						board->pieces[m][n]->tableMove = oldTableMoves[m][n];
+					}
+				}
+
+				beta = (eval < beta) ? eval : beta;
+
+			}
+			oldTableMoves.clear();
+		}
+	}
+	std::cout << "COUNT: " << countMinimax << endl;// Testttttttttttttttttt
 }
 
 void ComAI::makeMove(Board* board) {
+
 	// make move from calculations
 	if (diff == Difficulty::RANDOM) {
 		makeRandomMove(board);
@@ -44,7 +247,7 @@ void ComAI::makeRandomMove(Board* board) const {
 		newY = newX + 1;
 	} while (!board->movePiece(availPiece[chosen], availPiece[chosen]->tableMove[newX], availPiece[chosen]->tableMove[newY]));
 
-	cout << "AI moved to [" << availPiece[chosen]->posX << "][" << availPiece[chosen]->posY << "]" << endl;
+	std::cout << "AI moved to [" << availPiece[chosen]->posX << "][" << availPiece[chosen]->posY << "]" << endl;
 
 	// Promotion
 	if (availPiece[chosen]->id == PieceID::Pawn && (availPiece[chosen]->posY == 0 || availPiece[chosen]->posY == 7)) {
@@ -54,9 +257,114 @@ void ComAI::makeRandomMove(Board* board) const {
 
 }
 
-void ComAI::makeHardMove(Board* board) const {
-	//
+void ComAI::makeHardMove(Board* board) {
+	Piece* bestPiece = nullptr;
+	int bestX = 0, bestY = 0;
+
+	getBestMove(bestPiece, bestX, bestY, board, 2);
+
+	if (bestPiece) {
+		board->movePiece(bestPiece, bestX, bestY);
+		std::cout << "Best move!" << endl;
+		std::cout << "AI moved to [" << bestX << "][" << bestY << "]" << endl;	
+	}
+	else {
+		makeRandomMove(board);
+		std::cout << "Random move!" << endl;
+	}
+	std::cout << "Evaluation: " << evaluate(board) << endl;
 }
 
 Player::Player(Color _color): color(_color) {
+}
+
+Player::~Player() {
+}
+
+
+void ComAI::initEvaluation() {
+
+	for (auto& eval : evals) eval = nullptr;
+
+	evals[(int)PieceID::Pawn] = new int*[8] {	
+		new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 },
+		new int[8] { 50, 50, 50, 50, 50, 50, 50, 50 },
+		new int[8] { 10, 10, 20, 30, 30, 20, 10, 10 },
+		new int[8] { 5, 5, 10, 25, 25, 10, 5, 5 },
+		new int[8] { 0, 0, 0, 20, 20, 0, 0, 0 },
+		new int[8] { 5, -5, -10, 0, 0, -10, -5, 5 },
+		new int[8] { 5, 10, 10, -20, -20, 10, 10, 5 },
+		new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 }
+	};
+
+	evals[(int)PieceID::Rook] = new int* [8] {
+		new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 },
+		new int[8] { 5, 10, 10, 10, 10, 10, 10, 5 },
+		new int[8] { -5, 0, 0, 0, 0, 0, 0, -5 },
+		new int[8] { -5, 0, 0, 0, 0, 0, 0, -5 },
+		new int[8] { -5, 0, 0, 0, 0, 0, 0, -5 },
+		new int[8] { -5, 0, 0, 0, 0, 0, 0, -5 },
+		new int[8] { -5, 0, 0, 0, 0, 0, 0, -5 },
+		new int[8] { 0, 0, 0, 5, 5, 0, 0, 0 }
+	};
+
+	evals[(int)PieceID::Knight] = new int* [8] {
+		new int[8] { -50, -40, -30, -30, -30, -30, -40, -50 },
+		new int[8] { -40, -20, 0, 0, 0, 0, -20, -40 },
+		new int[8] { -30, 0, 10, 15, 15, 10, 0, -30 },
+		new int[8] { -30, 5, 15, 20, 20, 15, 5, -30 },
+		new int[8] { -30, 0, 15, 20, 20, 15, 0, -30 },
+		new int[8] { -30, 5, 10, 15, 15, 10, 5, -30 },
+		new int[8] { -40, -20, 0, 5, 5, 0, -20, -40 },
+		new int[8] { -50, -40, -30, -30, -30, -30, -40, -50 }
+	};
+
+	evals[(int)PieceID::Bishop] = new int* [8] {
+		new int[8] { -20, -10, -10, -10, -10, -10, -10, -20 },
+		new int[8] { -10,  0,    0,   0,   0,   0,    0,  -10 },
+		new int[8] { -10,  0,    5,  10,  10,   5,    0,  -10 },
+		new int[8] { -10,  5,    5,  10,  10,   5,    5,  -10 },
+		new int[8] { -10,  0,   10,  10,  10,  10,    0,  -10 },
+		new int[8] { -10, 10,   10,  10,  10,  10,   10,  -10 },
+		new int[8] { -10,  5,    0,   0,   0,   0,    5,  -10 },
+		new int[8] { -20, -10, -10, -10, -10, -10, -10, -20 }
+	};
+
+	evals[(int)PieceID::Queen] = new int* [8] {
+		new int[8] {-20, -10, -10, -5, -5, -10, -10, -20},
+		new int[8] { -10, 0, 0, 0, 0, 0, 0, -10 },
+		new int[8] { -10, 0, 5, 5, 5, 5, 0, -10 },
+		new int[8] { -5, 0, 5, 5, 5, 5, 0, -5 },
+		new int[8] { 0, 0, 5, 5, 5, 5, 0, -5 },
+		new int[8] { -10, 5, 5, 5, 5, 5, 0, -10 },
+		new int[8] { -10, 0, 5, 0, 0, 0, 0, -10 },
+		new int[8] { -20, -10, -10, -5, -5, -10, -10, -20 }
+	};
+
+	// King middle game
+	evals[(int)PieceID::King] = new int* [8] {
+		new int[8] {-30, -40, -40, -50, -50, -40, -40, -30},
+		new int[8] { -30, -40, -40, -50, -50, -40, -40, -30 },
+		new int[8] { -30, -40, -40, -50, -50, -40, -40, -30 },
+		new int[8] { -30, -40, -40, -50, -50, -40, -40, -30 },
+		new int[8] { -20, -30, -30, -40, -40, -30, -30, -20 },
+		new int[8] { -10, -20, -20, -20, -20, -20, -20, -10 },
+		new int[8] { 20, 20, 0, 0, 0, 0, 20, 20 },
+		new int[8] { 20, 30, 10, 0, 0, 10, 30, 20 }
+	};
+
+	// King end game
+	evals[(int)PieceID::King + 1] = new int* [8] {
+		new int[8] {-50, -40, -30, -20, -20, -30, -40, -50},
+		new int[8] { -30, -20, -10, 0, 0, -10, -20, -30 },
+		new int[8] { -30, -10, 20, 30, 30, 20, -10, -30 },
+		new int[8] { -30, -10, 30, 40, 40, 30, -10, -30 },
+		new int[8] { -30, -10, 30, 40, 40, 30, -10, -30 },
+		new int[8] { -30, -10, 20, 30, 30, 20, -10, -30 },
+		new int[8] { -30, -30, 0, 0, 0, 0, -30, -30 },
+		new int[8] { -50, -30, -30, -30, -30, -30, -30, -50 }
+	};
+
+
+
 }

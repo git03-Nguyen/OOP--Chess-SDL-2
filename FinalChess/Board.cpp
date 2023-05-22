@@ -1,7 +1,19 @@
 #include "Board.h"
 
 void Board::parseFEN(const char* fen) {
+    pieces.resize(8);
+    for (auto& row : pieces) {
+        row.resize(8);
+        for (auto& p : row) {
+            if (p) {
+                delete p;
+                p = nullptr;
+            }
+        }
+    }
+
     if (!fen) return;
+
 
     int i = 0, x = 0, y = 0;
 
@@ -113,6 +125,12 @@ void Board::parseFEN(const char* fen) {
         i++;
     }
     
+    for (auto& row : pieces) for (auto& p : row) {
+        if (p) {
+            (p->color == Color::White) ? p->setKing(wKing) : p->setKing(bKing);
+            p->updateTableMove(pieces);
+        }
+    }
 
 
 }
@@ -189,26 +207,11 @@ std::string Board::getFEN() const {
 }
 
 Board::Board(vector<string> history) {
-
-    pieces.resize(8);
-    for (auto& row : pieces) {
-        row.resize(8);
-        for (auto& p : row) {
-            p = nullptr;
-        }
-    }
     
     if (!history.size()) history.push_back("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     this->history = history;
     
     parseFEN(history.back().c_str());
-
-    for (auto& row : pieces) for (auto& p : row) {
-        if (p) {
-            (p->color == Color::White) ? p->setKing(wKing) : p->setKing(bKing);
-            p->updateTableMove(pieces);
-        }
-    }
     
     redoHistory = vector<string>();
 }
@@ -250,6 +253,14 @@ bool Board::movePiece(Piece* piece, int newX, int newY) {
     }
     currentTurn = (Color)!bool(currentTurn);
     return true;
+}
+
+void Board::updateTableMoves() {
+    for (auto& row : pieces) {
+        for (auto& piece : row) {
+            if (piece) piece->updateTableMove(pieces);
+        }
+    }
 }
 
 void Board::promotePawn(Piece* pawn, int choice) {
@@ -324,23 +335,10 @@ bool Board::canRedo() const {
 
 void Board::undo() {
     if (history.size() > 1) {
-        for (auto& row : pieces) for (auto& p : row) {
-            if (p) {
-                delete p;
-                p = nullptr;
-            }
-        }
 
         redoHistory.push_back(history.back().c_str());
         history.pop_back();
         parseFEN(history.back().c_str());
-
-        for (auto& row : pieces) for (auto& p : row) {
-            if (p) {
-                (p->color == Color::White) ? p->setKing(wKing) : p->setKing(bKing);
-                p->updateTableMove(pieces);
-            }
-        }
 
     }
 }

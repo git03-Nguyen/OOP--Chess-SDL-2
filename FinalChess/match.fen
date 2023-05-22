@@ -1,11 +1,22 @@
-0
+2
 rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b qkQK - 1 1
-rnbqkbnr/ppppp1pp/8/5p2/4P3/8/PPPP1PPP/RNBQKBNR w qkQK - 2 2
-rnbqkbnr/ppppp1pp/8/5P2/8/8/PPPP1PPP/RNBQKBNR b qkQK - 0 2
-rnbqkbnr/ppppp2p/6p1/5P2/8/8/PPPP1PPP/RNBQKBNR w qkQK - 1 3
-rnbqkbnr/ppppp2p/5Pp1/8/8/8/PPPP1PPP/RNBQKBNR b qkQK - 2 3
-rnbqkbnr/ppppp2p/5P2/6p1/8/8/PPPP1PPP/RNBQKBNR w qkQK - 3 4
-rnbqkbnr/ppppP2p/8/6p1/8/8/PPPP1PPP/RNBQKBNR b qkQK - 0 4
-rnbqkbnr/ppp1P2p/3p4/6p1/8/8/PPPP1PPP/RNBQKBNR w qkQK - 1 5
-rnbQkbnr/ppp4p/3p4/6p1/8/8/PPPP1PPP/RNBQKBNR w qkQK - 0 5
+rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b qkQK - 1 1
+rnbqkbnr/pp1ppppp/8/2p5/2P5/8/PP1PPPPP/RNBQKBNR w qkQK - 2 2
+rnbqkbnr/pp1ppppp/8/2p5/2PP4/8/PP2PPPP/RNBQKBNR b qkQK - 3 2
+rnbqkbnr/pp1ppppp/8/8/2Pp4/8/PP2PPPP/RNBQKBNR w qkQK - 0 3
+rnbqkbnr/pp1ppppp/8/8/2PQ4/8/PP2PPPP/RNB1KBNR b qkQK - 0 3
+rnbqkbnr/pp2pppp/8/3p4/2PQ4/8/PP2PPPP/RNB1KBNR w qkQK - 1 4
+rnbqkbnr/pp2pppp/8/3P4/3Q4/8/PP2PPPP/RNB1KBNR b qkQK - 0 4
+rnbqkbnr/p3pppp/8/1p1P4/3Q4/8/PP2PPPP/RNB1KBNR w qkQK - 1 5
+rnbqkbnr/p3pppp/8/1pQP4/8/8/PP2PPPP/RNB1KBNR b qkQK - 2 5
+rnbqkbnr/p3pppp/8/2QP4/1p6/8/PP2PPPP/RNB1KBNR w qkQK - 3 6
+rnbqkbnr/p3pppp/8/1Q1P4/1p6/8/PP2PPPP/RNB1KBNR b qkQK - 4 6
+r1bqkbnr/p3pppp/2n5/1Q1P4/1p6/8/PP2PPPP/RNB1KBNR w qkQK - 5 7
+r1bqkbnr/p3pppp/2Q5/3P4/1p6/8/PP2PPPP/RNB1KBNR b qkQK - 0 7
+r2qkbnr/p2bpppp/2Q5/3P4/1p6/8/PP2PPPP/RNB1KBNR w qkQK - 1 8
+r2qkbnr/p2bpppp/8/3P4/1pQ5/8/PP2PPPP/RNB1KBNR b qkQK - 2 8
+r2qkbnr/p2bppp1/7p/3P4/1pQ5/8/PP2PPPP/RNB1KBNR w qkQK - 3 9
+r2qkbnr/p2bppp1/7p/3P4/1pQ1P3/8/PP3PPP/RNB1KBNR b qkQK - 4 9
+r2qkbnr/p2b1pp1/7p/3Pp3/1pQ1P3/8/PP3PPP/RNB1KBNR w qkQK - 5 10
+r2qkbnr/p2b1pp1/7p/3Pp3/1Q2P3/8/PP3PPP/RNB1KBNR b qkQK - 0 10
+r2qkb1r/p2b1pp1/5n1p/3Pp3/1Q2P3/8/PP3PPP/RNB1KBNR w qkQK - 1 11
