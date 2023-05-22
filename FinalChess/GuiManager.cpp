@@ -1,6 +1,6 @@
 #include "GuiManager.h"
 
-GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), board(_board) {
+GuiManager::GuiManager(SDL_Window* _window) : window(_window), board(nullptr) {
 	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
 	TTF_Init();
 
@@ -67,14 +67,6 @@ GuiManager::GuiManager(SDL_Window* _window, Board* _board) : window(_window), bo
 	buttons[ButtonType::ROOK] = new Button(410, 280, 90, 90, ButtonType::ROOK);
 
 
-	// ...
-	// pieces' textures
-	for (auto& row : board->pieces) {
-		for (auto& piece : row) {
-			if (piece) piece->setTexture(renderer);
-		}
-	}
-
 }
 
 GuiManager::~GuiManager() {
@@ -101,13 +93,22 @@ GuiManager::~GuiManager() {
 	IMG_Quit();
 }
 
+void GuiManager::setBoard(Board* board) {
+	this->board = board;
+	// ...
+	// pieces' textures
+	for (auto& row : board->pieces) {
+		for (auto& piece : row) {
+			if (piece) piece->setTexture(renderer);
+		}
+	}
+}
+
 SDL_Renderer* GuiManager::getRenderer() const {
 	return renderer;
 }
 
 void GuiManager::render(GameState* gameState) {
-	if (!gameState->guiHasChanged) return;
-
 	switch (gameState->state) {
 	case State::MAIN_MENU:
 		renderMainMenu(gameState);
@@ -153,7 +154,6 @@ void GuiManager::render(GameState* gameState) {
 }
 
 void GuiManager::renderMainMenu(GameState* gameState) {
-	cout << "MAIN_MENU is showing ... " << endl;
 	SDL_RenderClear(renderer);
 	drawBackground(gameState->state);
 
@@ -427,7 +427,6 @@ void GuiManager::drawAllPieces() {
 void GuiManager::drawCircleButton(Button* button, Button* focusedButton, bool drawShadow) {
 	if (!button) return;
 	if (focusedButton == button) {
-		std::cout << "Focusing button " << *focusedButton << std::endl;
 		// Zoom in the focused button
 		focusedButton->posX -= 2;
 		focusedButton->posY -= 2;

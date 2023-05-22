@@ -457,7 +457,7 @@ void Pawn::updateTableMove(vector<vector<Piece*>>& pieces) {
 	}
 	
 	// First move
-	if (canFirstMove && !pieces[x][y]) {
+	if (posY == 1 + 5 * (color == Color::White) && !pieces[x][y]) {
 		(color == Color::White) ? y -= 1 : y += 1;
 		if (y >= 0 && y < 8 && !pieces[x][y]
 			&& (isCheckingChecked || !thisMoveCanMakeChecked(pieces, x, y))) {
@@ -504,7 +504,7 @@ bool Pawn::move(vector<vector<Piece*>>& pieces, int newX, int newY) {
 	}
 	
 	if (!Piece::move(pieces, newX, newY)) return false;
-	canFirstMove = false;
+
 	return true;
 }
 

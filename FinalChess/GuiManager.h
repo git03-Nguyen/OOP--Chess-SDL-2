@@ -78,8 +78,9 @@ private:
 
 
 public:
-	GuiManager(SDL_Window* _window, Board* _board);
+	GuiManager(SDL_Window* _window);
 	~GuiManager();
+	void setBoard(Board* board);
 	SDL_Renderer* getRenderer() const;
 
 	bool isOnBoard(int x, int y) const;

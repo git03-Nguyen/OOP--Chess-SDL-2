@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
+#include <fstream>
 #include <string>
+#include <vector>
 #include <SDL.h>
 
 #include "Board.h"
@@ -8,6 +10,7 @@
 #include "Player.h"
 #include "GameState.h"
 
+using namespace std;
 
 class GameManager {
 private:
@@ -32,7 +35,10 @@ private:
 	void changeTurn();
 
 	// init new game
-	void initialize(const char* fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	void newGameBoard(vector<string> oldMoves = vector<string>());
+
+	// save old game
+	const string saveFile = "match.fen";
 
 
 

@@ -140,4 +140,9 @@
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="match.fen">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>
