@@ -290,6 +290,96 @@ MoveID Board::movePiece(Piece* piece, int newX, int newY) {
     return type;
 }
 
+MoveID Board::tryMovePiece(Piece* piece, int newX, int newY, Piece*& dstP) {
+    dstP = pieces[newX][newY];
+    MoveID type = piece->move(pieces, newX, newY, true);
+    // Promotion, we have to wait for trying choosing promotion
+    if (type == MoveID::Promotion) return MoveID::Promotion;
+    // First move, note the enpassant square
+    if (type == MoveID::Pawn1st) {
+        int enPassantX = newX;
+        int enPassantY = (piece->color == Color::White) ? newY + 1 : newY - 1;
+        Piece* enemyPawn = nullptr;
+        if (newX < 7) {
+            enemyPawn = pieces[newX + 1][newY];
+            if (enemyPawn && enemyPawn->id == PieceID::Pawn) enemyPawn->addMove(enPassantX, enPassantY);
+        }
+        if (newX > 0) {
+            enemyPawn = pieces[newX - 1][newY];
+            if (enemyPawn && enemyPawn->id == PieceID::Pawn) enemyPawn->addMove(enPassantX, enPassantY);
+        }
+    }
+    // If enpassant -> dstP not save the dst square, but save the enemy pawn square
+    if (type == MoveID::EnPassant) {
+        dstP = pieces[piece->posX][(piece->color == Color::White) ? piece->posY + 1 : piece->posY - 1];
+        pieces[piece->posX][(piece->color == Color::White) ? piece->posY + 1 : piece->posY - 1] = nullptr;
+    }
+         
+    return type;
+}
+
+void Board::undoMovePiece(MoveID type, Piece* srcP, int srcX, int srcY, int dstX, int dstY, Piece* dstP) {
+    // Reput the ally piece to the origin place
+    pieces[dstX][dstY] = nullptr;
+    pieces[srcP->posX = srcX][srcP->posY = srcY] = srcP;
+
+    // If an enemy has died -> revive him -> reput on the board
+    if (dstP) {
+        dstP->isAlive = true;
+        pieces[dstP->posX][dstP->posY] = dstP;
+    }
+
+    // If promotion, transform again to pawn 
+    if (type == MoveID::Promotion) {
+        Color pawnColor = srcP->color;
+        delete srcP;
+        srcP = new Pawn(srcX, srcY, pawnColor);
+        srcP->setKing((pawnColor == Color::White) ? wKing : bKing);
+        srcP->setTexture(renderer);
+        srcP->updateTableMove(pieces);
+    }
+    // If King-side Castling, move also the rook
+    else if (type == MoveID::KCastle) {
+        King* king = dynamic_cast<King*>(srcP);
+        king->castlingK = true;
+        Rook* rook = dynamic_cast<Rook*>(pieces[5][king->posY]);
+        rook->canCastling = true;
+        rook->posX = 7;
+    }
+    // If Queen-side Castling, move also the rook
+    else if (type == MoveID::QCastle) {
+        King* king = dynamic_cast<King*>(srcP);
+        king->castlingQ = true;
+        Rook* rook = dynamic_cast<Rook*>(pieces[3][king->posY]);
+        rook->canCastling = true;
+        rook->posX = 0;
+    }
+    // If Enpassant, revive the enemy pawn which was saved in dstP
+    else if (type == MoveID::EnPassant) {
+        enPassantX = dstX; enPassantY = dstY;
+        pieces[dstP->posX][dstP->posY] = nullptr;
+        pieces[dstP->posX][dstP->posY = srcP->posY] = dstP;
+    }
+    // If first move, delete the enpassant moves 
+    else if (type == MoveID::Pawn1st) {
+        if (enPassantX > 0) {
+            Piece* lPawn = pieces[dstX - 1][dstY];
+            if (lPawn && lPawn->id == PieceID::Pawn && lPawn->color != srcP->color) {
+                lPawn->tableMove.pop_back();
+                lPawn->tableMove.pop_back();
+            }
+        }
+        if (enPassantX < 7) {
+            Piece* rPawn = pieces[dstX + 1][dstY];
+            if (rPawn && rPawn->id == PieceID::Pawn && rPawn->color != srcP->color) {
+                rPawn->tableMove.pop_back();
+                rPawn->tableMove.pop_back();
+            }
+        }
+    }
+
+}
+
 void Board::updateTableMoves() {
     for (auto& row : pieces) {
         for (auto& piece : row) {

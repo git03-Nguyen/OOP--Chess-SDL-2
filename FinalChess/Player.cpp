@@ -199,7 +199,6 @@ void ComAI::getBestMove(Piece*& bestPiece, int& bestX, int& bestY, Board* board,
 			for (int index = 0; index < p->tableMove.size(); index += 2) {
 				int x = p->tableMove[index];
 				int y = p->tableMove[index + 1];
-
 				// Try to move
 				Piece* temp = board->pieces[x][y];
 				board->pieces[x][y] = p;

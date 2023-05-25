@@ -31,6 +31,8 @@ public:
 	~Board();
 	
 	MoveID movePiece(Piece* piece, int newX, int newY);
+	MoveID tryMovePiece(Piece* piece, int newX, int newY, Piece*& dstP);
+	void undoMovePiece(MoveID type, Piece* srcP, int srcX, int srcY, int dstX, int dstY, Piece* dstP);
 	MoveID promotePawn(Piece* pawn, int newX, int newY, int choice);
 	void updateTableMoves();
 	MatchResult getMatchResult() const;

@@ -93,7 +93,6 @@ bool Piece::thisMoveCanMakeChecked(vector<vector<Piece*>>& pieces, int newX, int
 	int oldX = posX, oldY = posY;
 	
 	// Try the move and check King is checked
-	//int moveType = move(pieces, newX, newY, true);
 	if (dest) dest->isAlive = false;
 	pieces[oldX][oldY] = nullptr; // move away from old position
 	pieces[newX][newY] = this; // move to new position
@@ -103,10 +102,6 @@ bool Piece::thisMoveCanMakeChecked(vector<vector<Piece*>>& pieces, int newX, int
 	bool res = king->isBeingAttacked(pieces);
 
 	// UNDO things
-	//move(pieces, oldX, oldY);
-	/*pieces[newX][newY] = dest;
-	if (dest) dest->isAlive = true;*/
-
 	pieces[newX][newY] = dest;
 	if (dest) dest->isAlive = true;
 	pieces[oldX][oldY] = this;
