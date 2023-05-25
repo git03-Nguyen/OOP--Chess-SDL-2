@@ -1,6 +1,8 @@
 #include "Board.h"
 
 void Board::parseFEN(const char* fen) {
+    if (!fen) return;
+
     pieces.resize(8);
     for (auto& row : pieces) {
         row.resize(8);
@@ -12,11 +14,7 @@ void Board::parseFEN(const char* fen) {
         }
     }
 
-    if (!fen) return;
-
-
     int i = 0, x = 0, y = 0;
-
     while (y < 8) {
         x = 0;
         while (x < 8) {
@@ -73,23 +71,23 @@ void Board::parseFEN(const char* fen) {
     currentTurn = (fen[i] == 'w') ? Color::White : Color::Black;
     i += 2;
 
-    // Castling white
+    // Castling
     while (i < strlen(fen) && fen[i] != ' ') {
         switch (fen[i]) {
         case 'K':
-            wKing->canCastling = dynamic_cast<Rook*>(pieces[7][7])->canCastling = true;
+            wKing->castlingK = dynamic_cast<Rook*>(pieces[7][7])->canCastling = true;
             break;
 
         case 'Q':
-            wKing->canCastling = dynamic_cast<Rook*>(pieces[0][7])->canCastling = true;
+            wKing->castlingQ = dynamic_cast<Rook*>(pieces[0][7])->canCastling = true;
             break;
 
         case 'k':
-            bKing->canCastling = dynamic_cast<Rook*>(pieces[7][0])->canCastling = true;
+            bKing->castlingK = dynamic_cast<Rook*>(pieces[7][0])->canCastling = true;
             break;
 
         case 'q':
-            bKing->canCastling = dynamic_cast<Rook*>(pieces[0][0])->canCastling = true;
+            bKing->castlingQ = dynamic_cast<Rook*>(pieces[0][0])->canCastling = true;
             break;
 
         default:
@@ -101,14 +99,23 @@ void Board::parseFEN(const char* fen) {
 
     // En passant
     if (fen[i] != '-') {
-        while (i < strlen(fen) && fen[i] != ' ') {
-            i++;
+        enPassantX = fen[i++] - 'a';
+        enPassantY = 7 - (fen[i++] - '1');
+        Piece* allyPawn = nullptr;
+        int pY = (currentTurn == Color::White) ? enPassantY + 1 : enPassantY - 1;
+        if (enPassantX < 7) {
+            allyPawn = pieces[enPassantX + 1][pY];
+            if (allyPawn && allyPawn->id == PieceID::Pawn && allyPawn->color == currentTurn) allyPawn->addMove(enPassantX, enPassantY);
         }
-    }
-    else {
+        if (enPassantX > 0) {
+            allyPawn = pieces[enPassantX - 1][pY];
+            if (allyPawn && allyPawn->id == PieceID::Pawn && allyPawn->color == currentTurn) allyPawn->addMove(enPassantX, enPassantY);
+        }
         i++;
     }
-    i++;
+    else {
+        i += 2;
+    }
 
     // Halfmove-clock -> 50-move-rule
     halfMoveClock = 0;
@@ -124,15 +131,20 @@ void Board::parseFEN(const char* fen) {
         fullMoveClock = fullMoveClock * 10 + (fen[i] - '0');
         i++;
     }
-    
+
+    // Set kings
     for (auto& row : pieces) for (auto& p : row) {
         if (p) {
             (p->color == Color::White) ? p->setKing(wKing) : p->setKing(bKing);
-            p->updateTableMove(pieces);
         }
     }
 
-
+    // Update moves
+    for (auto& row : pieces) for (auto& p : row) {
+        if (p) {
+            p->updateTableMove(pieces);
+        }
+    }
 }
 
 std::string Board::getFEN() const {
@@ -184,23 +196,21 @@ std::string Board::getFEN() const {
     fen += (currentTurn == Color::White) ? 'w' : 'b';
     fen += " ";
 
-    for (int i = 0; i <= 7; i += 7) for (int j = 0; j <= 7; j += 7) {
-        Rook* rook = dynamic_cast<Rook*>(pieces[j][i]);
-        if (rook && rook->canCastling) {
-            King* king = (rook->color == Color::White) ? wKing : bKing;
-            if (king->canCastling) {
-                if (rook->posX < king->posX) fen += (rook->color == Color::White) ? 'Q' : 'q';
-                else fen += (rook->color == Color::White) ? 'K' : 'k';
-            }
-        }
-    }
-    
+    if (wKing->castlingK) fen += "K";
+    if (wKing->castlingQ) fen += "Q";
+    if (bKing->castlingK) fen += "k";
+    if (bKing->castlingQ) fen += "q";
+    fen += " ";
 
     // Enpassant
-    fen += " - ";
+    if (enPassantX == -1 || enPassantY == -1) fen += "- ";
+    else {
+        fen += char('a' + enPassantX);
+        fen += char(7 - enPassantY + '1');
+        fen += " ";
+    }
 
     fen += to_string(halfMoveClock) + " ";
-
     fen += to_string(fullMoveClock);
 
     return fen;
@@ -208,12 +218,11 @@ std::string Board::getFEN() const {
 
 Board::Board(vector<string> history) {
     
-    if (!history.size()) history.push_back("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    this->history = history;
-    
-    parseFEN(history.back().c_str());
-    
+    if (!history.size()) this->history.push_back("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    else this->history = history;
+    parseFEN(this->history.back().c_str());
     redoHistory = vector<string>();
+
 }
 
 Board::~Board() {
@@ -225,34 +234,60 @@ Board::~Board() {
     history.clear();
 }
 
-bool Board::movePiece(Piece* piece, int newX, int newY) {
+MoveID Board::movePiece(Piece* piece, int newX, int newY) {
+    if (piece->color != currentTurn) throw string("Wrong color piece!");
     if (pieces[newX][newY]) halfMoveClock = 0; else halfMoveClock++;
     
-    if (!piece->move(pieces, newX, newY)) return false;
+    MoveID type = piece->move(pieces, newX, newY);
+    enPassantX = enPassantY = -1;
 
-    for (auto& row : pieces) {
-        for (auto& piece : row) {
-            if (piece) piece->updateTableMove(pieces);
+    if (type == MoveID::Kill) halfMoveClock = 0;
+
+    // Promotion, we have to wait for choosing promotion
+    if (type == MoveID::Promotion) return MoveID::Promotion;
+
+    // Update table moves for enemies and check if can move
+    bool canMove = false;
+    for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++)
+        if (pieces[i][j] && pieces[i][j]->color != currentTurn) {
+            pieces[i][j]->updateTableMove(pieces);
+            if (!canMove && pieces[i][j]->tableMove.size() > 0) canMove = true;
         }
+
+    // First move, note the enpassant square
+    if (type == MoveID::Pawn1st) {
+        enPassantX = newX; 
+        enPassantY = (piece->color == Color::White) ? newY + 1 : newY - 1;
+        Piece* enemyPawn = nullptr;
+        if (newX < 7) {
+            enemyPawn = pieces[newX + 1][newY];
+            if (enemyPawn && enemyPawn->id == PieceID::Pawn) enemyPawn->addMove(enPassantX, enPassantY);
+        }
+        if (newX > 0) {
+            enemyPawn = pieces[newX - 1][newY];
+            if (enemyPawn && enemyPawn->id == PieceID::Pawn) enemyPawn->addMove(enPassantX, enPassantY);
+        }
+        halfMoveClock = 0;
     }
 
-    if (bKing->isBeingAttacked(pieces, bKing->color)) {
-            cout << "BLACK in CHECK!" << endl;
+    // If enpassant
+    if (type == MoveID::EnPassant) halfMoveClock = 0;
+
+    // Change the turn if not a match-move = the move leading to win/lose/drawn = after that move the enemy cannot move
+    if (canMove) {
+        currentTurn = (currentTurn == Color::White) ? Color::Black : Color::White;
     }
-    if (wKing->isBeingAttacked(pieces, wKing->color)) {
-        cout << "WHITE in CHECK!" << endl;
+    else {
+        type = MoveID::Match;
     }
 
-    if (piece->color == Color::Black) fullMoveClock++;
-    
-    currentTurn = (Color)!bool(currentTurn);
-    if (piece->id != PieceID::Pawn || (piece->posY != 0 && piece->posY != 7)) {
-        redoHistory.clear();
-        history.push_back(getFEN());
-        cout << history.back() << endl;
-    }
-    currentTurn = (Color)!bool(currentTurn);
-    return true;
+    // Record the FEN
+    redoHistory.clear();
+    history.push_back(getFEN());
+    cout << history.back() << endl;
+
+    if (piece->color == Color::White) fullMoveClock++;
+    return type;
 }
 
 void Board::updateTableMoves() {
@@ -263,7 +298,7 @@ void Board::updateTableMoves() {
     }
 }
 
-void Board::promotePawn(Piece* pawn, int choice) {
+MoveID Board::promotePawn(Piece* pawn, int newX, int newY, int choice) {
     Piece* newPiece = nullptr;
 
     switch (choice) {
@@ -290,39 +325,33 @@ void Board::promotePawn(Piece* pawn, int choice) {
     newPiece->setTexture(renderer);
     delete pawn;
 
-    for (auto& row : pieces) {
-        for (auto& piece : row) {
-            if (piece) piece->updateTableMove(pieces);
-        }
-    }
-
-    if (bKing->isBeingAttacked(pieces, bKing->color)) {
-        cout << "BLACK in CHECK!" << endl;
-    }
-    if (wKing->isBeingAttacked(pieces, wKing->color)) {
-        cout << "WHITE in CHECK!" << endl;
-    }
-
-    redoHistory.clear();
-    history.push_back(getFEN());
-    cout << history.back() << endl;
-    cout << "Promotion successful!" << endl;
+    std::cout << "Promotion successful!" << endl;
+    return movePiece(newPiece, newX, newY);
 }
 
-int Board::checkWinLose() const {
-    // Check half move clock
-    // if (halfMoveClock >= 50) => Drawn match
+MatchResult Board::getMatchResult() const {
+    // Check half move clock -> Drawn
+    if (halfMoveClock >= 50) return MatchResult::Drawn;
     
-    // Check win/lose
-    bool runOutOfMove = true;
-    for (int i = 0; i < 8 && runOutOfMove; i++) {
-        for (int j = 0; j < 8 && runOutOfMove; j++) {
-            runOutOfMove = !((pieces[i][j] && pieces[i][j]->color != currentTurn
-                && pieces[i][j]->tableMove.size() != 0));
+    // Check enemy can move or not
+    bool canMove = false;
+    for (int i = 0; i < 8 && !canMove; i++) for (int j = 0; j < 8 && !canMove; j++) {
+        if (pieces[i][j] && pieces[i][j]->color != currentTurn && pieces[i][j]->tableMove.size() > 0) {
+            canMove = true;
+            break;
         }
     }
-    if (!runOutOfMove) return 0;
-    return (currentTurn == Color::White) ? 1 : -1;
+
+    King* king = (currentTurn == Color::White) ? bKing : wKing;
+    if (!canMove) {
+        // If enemy cannot move but king not being checked  -> Stalemate = Drawn
+        if (!king->isBeingAttacked(pieces)) return MatchResult::Drawn;
+        
+        // If enemy cannot move but king is in check -> Checkmate -> Win/Lose
+        return (currentTurn == Color::White) ? MatchResult::WhiteWin : MatchResult::BlackWin;
+    }
+    
+    return MatchResult::None;
 }
 
 bool Board::canUndo() const {
@@ -345,23 +374,10 @@ void Board::undo() {
 
 void Board::redo() {
     if (redoHistory.size() > 0) {
-        for (auto& row : pieces) for (auto& p : row) {
-            if (p) {
-                delete p;
-                p = nullptr;
-            }
-        }
 
         history.push_back(redoHistory.back().c_str());
         parseFEN(redoHistory.back().c_str());
         redoHistory.pop_back();
-
-        for (auto& row : pieces) for (auto& p : row) {
-            if (p) {
-                (p->color == Color::White) ? p->setKing(wKing) : p->setKing(bKing);
-                p->updateTableMove(pieces);
-            }
-        }
 
     }
 }

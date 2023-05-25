@@ -40,14 +40,14 @@ int ComAI::evaluate(Board* board) const {
 				int eval = evals[(int)board->pieces[i][j]->id][i][j];
 				balance += (board->pieces[i][j]->color == Color::White) ? eval : -eval;
 
-				if (isEndGame) {
+				/*if (isEndGame) {
 					if (board->pieces[i][j]->id == PieceID::Queen) 
 						(board->pieces[i][j]->color == Color::White) ? wQueen++ : bQueen++;
 					else if (board->pieces[i][j]->id == PieceID::Pawn) 
 						(board->pieces[i][j]->color == Color::White) ? wPawn++ : bPawn++;
 					else 
 						isEndGame = false;
-				}
+				}*/
 
 			}
 		}
@@ -64,9 +64,7 @@ int ComAI::evaluate(Board* board) const {
 int countMinimax = 0; // Testttttttttttt
 
 int ComAI::minimax(Board* board, int depth, int alpha, int beta, bool maximizingPlayer) {
-	if (depth == 0) {
-		return evaluate(board);
-	}
+	if (depth == 0) return evaluate(board);
 
 	countMinimax++; //Testttttttttttttttt
 
@@ -76,16 +74,20 @@ int ComAI::minimax(Board* board, int depth, int alpha, int beta, bool maximizing
 		for (int i = 0; i < 8 && isContinue; i++) for (int j = 0 && isContinue; j < 8; j++) {
 			Piece* p = board->pieces[i][j];
 			if (p && p->color != color && p->tableMove.size() > 0) {
+				
+				// Save tables of COM
 				std::vector<std::vector<std::vector<int>>> oldTableMoves;
 				oldTableMoves.resize(8);
 				for (int m = 0; m < 8; m++) {
 					oldTableMoves[m].resize(8);
 					for (int n = 0; n < 8; n++) {
-						if (board->pieces[m][n]) {
+						if (board->pieces[m][n] && board->pieces[m][n]->color == color) {
 							oldTableMoves[m][n] = board->pieces[m][n]->tableMove;
 						}
 					}
 				}
+
+				// Pick 1 move
 				for (int index = 0; index < p->tableMove.size(); index += 2) {
 					int x = p->tableMove[index];
 					int y = p->tableMove[index + 1];
@@ -94,16 +96,20 @@ int ComAI::minimax(Board* board, int depth, int alpha, int beta, bool maximizing
 					Piece* temp = board->pieces[x][y];
 					board->pieces[x][y] = p;
 					board->pieces[i][j] = nullptr;
-					board->updateTableMoves();
+					for (int m = 0; m < 8; m++) for (int n = 0; n < 8; n++) {
+						if (board->pieces[m][n] && board->pieces[m][n]->color == color)
+							board->pieces[m][n]->updateTableMove(board->pieces);
+					}
 					// Calculate eval
-					int eval = minimax(board, depth - 1, alpha, beta, false); // false -> ...
+ 					int eval = minimax(board, depth - 1, alpha, beta, false); // false -> ...
 					maxEval = (eval > maxEval) ? eval : maxEval;
 					alpha = (eval > alpha) ? eval : alpha;
+
 					// Undo the move
 					board->pieces[x][y] = temp;
 					board->pieces[i][j] = p;
 					for (int m = 0; m < 8; m++) for (int n = 0; n < 8; n++) {
-						if (board->pieces[m][n]) {
+						if (board->pieces[m][n] && board->pieces[m][n]->color == color) {
 							board->pieces[m][n]->tableMove = oldTableMoves[m][n];
 						}
 					}
@@ -126,7 +132,7 @@ int ComAI::minimax(Board* board, int depth, int alpha, int beta, bool maximizing
 				for (int m = 0; m < 8; m++) {
 					oldTableMoves[m].resize(8);
 					for (int n = 0; n < 8; n++) {
-						if (board->pieces[m][n]) {
+						if (board->pieces[m][n] && board->pieces[m][n]->color != color) {
 							oldTableMoves[m][n] = board->pieces[m][n]->tableMove;
 						}
 					}
@@ -139,8 +145,12 @@ int ComAI::minimax(Board* board, int depth, int alpha, int beta, bool maximizing
 					Piece* temp = board->pieces[x][y];
 					board->pieces[x][y] = p;
 					board->pieces[i][j] = nullptr;
-					board->updateTableMoves();
-					// Calculate eval
+					for (int m = 0; m < 8; m++) for (int n = 0; n < 8; n++) {
+						if (board->pieces[m][n] && board->pieces[m][n]->color != color)
+							board->pieces[m][n]->updateTableMove(board->pieces);
+					}
+
+ 					// Calculate eval
 					int eval = minimax(board, depth - 1, alpha, beta, true); // false -> ...
 					minEval = (eval < minEval) ? eval : minEval;
 					beta = (eval < beta) ? eval : beta;
@@ -148,7 +158,7 @@ int ComAI::minimax(Board* board, int depth, int alpha, int beta, bool maximizing
 					board->pieces[x][y] = temp;
 					board->pieces[i][j] = p;
 					for (int m = 0; m < 8; m++) for (int n = 0; n < 8; n++) {
-						if (board->pieces[m][n]) {
+						if (board->pieces[m][n] && board->pieces[m][n]->color != color) {
 							board->pieces[m][n]->tableMove = oldTableMoves[m][n];
 						}
 					}
@@ -173,16 +183,19 @@ void ComAI::getBestMove(Piece*& bestPiece, int& bestX, int& bestY, Board* board,
 	for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++) {
 		Piece* p = board->pieces[i][j];
 		if (p && p->color == color && p->tableMove.size() > 0) {
+			
+			// Save tables for HUMAN pieces
 			std::vector<std::vector<std::vector<int>>> oldTableMoves;
 			oldTableMoves.resize(8);
 			for (int m = 0; m < 8; m++) {
 				oldTableMoves[m].resize(8);
 				for (int n = 0; n < 8; n++) {
-					if (board->pieces[m][n]) {
+					if (board->pieces[m][n] && board->pieces[m][n]->color != color) {
 						oldTableMoves[m][n] = board->pieces[m][n]->tableMove;
 					}
 				}
 			}
+			// Pick 1 move and try moving
 			for (int index = 0; index < p->tableMove.size(); index += 2) {
 				int x = p->tableMove[index];
 				int y = p->tableMove[index + 1];
@@ -191,7 +204,11 @@ void ComAI::getBestMove(Piece*& bestPiece, int& bestX, int& bestY, Board* board,
 				Piece* temp = board->pieces[x][y];
 				board->pieces[x][y] = p;
 				board->pieces[i][j] = nullptr;
-				board->updateTableMoves();
+				for (int m = 0; m < 8; m++) for (int n = 0; n < 8; n++) {
+					if (board->pieces[m][n] && board->pieces[m][n]->color != color)
+						board->pieces[m][n]->updateTableMove(board->pieces);
+				}
+
 				// Calculate eval
 				int eval = minimax(board, depth, alpha, beta, true); // true -> maximizing -> human
 				if (eval < minEval) {
@@ -200,11 +217,12 @@ void ComAI::getBestMove(Piece*& bestPiece, int& bestX, int& bestY, Board* board,
 					bestX = x;
 					bestY = y;
 				}
+
 				// Undo the move
 				board->pieces[x][y] = temp;
 				board->pieces[i][j] = p;
 				for (int m = 0; m < 8; m++) for (int n = 0; n < 8; n++) {
-					if (board->pieces[m][n]) {
+					if (board->pieces[m][n] && board->pieces[m][n]->color != color) {
 						board->pieces[m][n]->tableMove = oldTableMoves[m][n];
 					}
 				}
@@ -227,6 +245,7 @@ void ComAI::makeMove(Board* board) {
 	else if (diff == Difficulty::HARD) {
 		makeHardMove(board);
 	}
+
 }
 
 void ComAI::makeRandomMove(Board* board) const {
@@ -237,23 +256,20 @@ void ComAI::makeRandomMove(Board* board) const {
 	}
 
 	int chosen, newX, newY;
-	do {
-		chosen = rand() % (availPiece.size());
-		newX = rand() % availPiece[chosen]->tableMove.size();
-		newY = 0;
-		if (newX % 2 != 0) {
-			newX = (newX + 1) % availPiece[chosen]->tableMove.size();
-		}
-		newY = newX + 1;
-	} while (!board->movePiece(availPiece[chosen], availPiece[chosen]->tableMove[newX], availPiece[chosen]->tableMove[newY]));
-
-	std::cout << "AI moved to [" << availPiece[chosen]->posX << "][" << availPiece[chosen]->posY << "]" << endl;
-
-	// Promotion
-	if (availPiece[chosen]->id == PieceID::Pawn && (availPiece[chosen]->posY == 0 || availPiece[chosen]->posY == 7)) {
-		int choice = rand() % 5 + 1;
-		board->promotePawn(availPiece[chosen], choice);
+	chosen = rand() % (availPiece.size());
+	newX = rand() % availPiece[chosen]->tableMove.size();
+	newY = 0;
+	if (newX % 2 != 0) {
+		newX = (newX + 1) % availPiece[chosen]->tableMove.size();
 	}
+	newY = newX + 1;
+	if (board->movePiece(availPiece[chosen], availPiece[chosen]->tableMove[newX], availPiece[chosen]->tableMove[newY]) == MoveID::Promotion) {
+		// If 3 then promotion
+		int choice = rand() % 5 + 1;
+		board->promotePawn(availPiece[chosen], availPiece[chosen]->tableMove[newX], availPiece[chosen]->tableMove[newY], choice);
+	}
+
+	std::cout << "Random.AI moved to [" << availPiece[chosen]->posX << "][" << availPiece[chosen]->posY << "]" << endl;
 
 }
 
@@ -261,16 +277,14 @@ void ComAI::makeHardMove(Board* board) {
 	Piece* bestPiece = nullptr;
 	int bestX = 0, bestY = 0;
 
-	getBestMove(bestPiece, bestX, bestY, board, 2);
+	getBestMove(bestPiece, bestX, bestY, board, 3);
 
 	if (bestPiece) {
 		board->movePiece(bestPiece, bestX, bestY);
-		std::cout << "Best move!" << endl;
-		std::cout << "AI moved to [" << bestX << "][" << bestY << "]" << endl;	
+		std::cout << "Hard.AI moved to [" << bestX << "][" << bestY << "]" << endl;	
 	}
 	else {
-		makeRandomMove(board);
-		std::cout << "Random move!" << endl;
+		throw string("AI error!");
 	}
 	std::cout << "Evaluation: " << evaluate(board) << endl;
 }

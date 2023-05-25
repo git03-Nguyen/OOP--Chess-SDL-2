@@ -83,8 +83,8 @@ public:
 	void setBoard(Board* board);
 	SDL_Renderer* getRenderer() const;
 
-	bool isOnBoard(int x, int y) const;
-	Button* getButton(GameState* gameState, int x, int y) const;
+	bool mouseIsOnBoard(GameState* gameState) const;
+	Button* getButton(GameState* gameState) const;
 
 	void render(GameState* gameState);
 	void renderMainMenu(GameState* gameState);

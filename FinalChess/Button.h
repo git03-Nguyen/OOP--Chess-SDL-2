@@ -17,8 +17,6 @@ public:
 	Button(int _posX, int _posY, int _width, int _height, ButtonType _type);
 	~Button();
 
-	friend std::ostream& operator<<(std::ostream& os, const Button& button);
-
 };
 
 

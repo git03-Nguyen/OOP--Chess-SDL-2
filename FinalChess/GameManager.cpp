@@ -1,19 +1,17 @@
 #include "GameManager.h"
 
 void GameManager::changeTurn() {
-	if (!player) {
-		return;
-	}
-
-	if ((gameState->matchResult = board->checkWinLose()) != 0) { // -1 or 1
+	if (!player) return;
+	
+	// Disable continuing to play after win/lose
+	if ((gameState->matchResult = board->getMatchResult()) != MatchResult::None) {
 		gameState->guiHasChanged = true;
 		player = nullptr; // Disable continuing to play after winning/losing
 		gameState->state = State::MATCH_RESULT;
+		return;
 	}
-	else {
-		player = ((player == player1) ? player2 : player1);
-		gameState->currentColor = board->currentTurn = player->color;
-	}
+
+	player = ((player1->color == board->currentTurn) ? player1 : player2);
 
 }
 
@@ -24,13 +22,12 @@ void GameManager::newGameBoard(vector<string> oldMoves) {
 	board->renderer = gui->getRenderer();
 
 	// gameState - flags
-	gameState->currentColor = board->currentTurn;
 	gameState->state = State::PLAYING;
 	gameState->guiHasChanged = true;
 
 	player1 = new Human(Color::White); // 1st player is always human
 	player = (player1->color == board->currentTurn) ? player1 : player2;
-	
+	changeTurn();
 }
 
 GameManager::GameManager(const char* title, int xPos, int yPos, int width, int height) {
@@ -75,13 +72,11 @@ void GameManager::gameLoop() {
 		// Render GUI based on game state
 		if (gameState->guiHasChanged) gui->render(gameState);
 
-		// AI's move
-		if (player && player->type == PlayerType::ComAI) { 
-			if (dynamic_cast<ComAI*>(player)->diff == Difficulty::RANDOM) SDL_Delay(300);
+		// AI's moves
+		if (player && player->type == PlayerType::ComAI) {
 			player->makeMove(board);
-			changeTurn();
-			gameState->guiHasChanged = true;
 			gui->render(gameState);
+			changeTurn();
 		}
 
 		SDL_Delay(1);
@@ -100,12 +95,11 @@ void GameManager::handleEvent() {
 			return;
 		}
 
-		int x, y;
-		SDL_GetMouseState(&x, &y);
+		SDL_GetMouseState(&gameState->x, &gameState->y);
 
 		// Event Hover button
 		if (e.type == SDL_MOUSEMOTION) {
-			Button* mouseOnButton = gui->getButton(gameState, x, y);
+			Button* mouseOnButton = gui->getButton(gameState);
 			if (gameState->focusedButton != mouseOnButton) {
 				gameState->focusedButton = mouseOnButton;
 				gameState->guiHasChanged = true;
@@ -118,19 +112,20 @@ void GameManager::handleEvent() {
 
 		// Event Click 
 		if (e.type == SDL_MOUSEBUTTONDOWN) {
+
 			// Click on buttons -> maybe change the GameState
-			if (gameState->clickedButton = gui->getButton(gameState, x, y)) {
+			if (gameState->clickedButton = gui->getButton(gameState)) {
 				handleClickButton(gameState->clickedButton);
 			}
 			// Click on board (human-turn) -> highlight, choose moves
-			else if (player && player->type == PlayerType::Human && gameState->state == State::PLAYING && gui->isOnBoard(x, y)) {
-				int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
-				int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+			else if (player && player->type == PlayerType::Human && gui->mouseIsOnBoard(gameState)) {
+				int boardX = (gameState->x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+				int boardY = (gameState->y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
 				(!gameState->clickedPiece) ? handleClickOnBoard(boardX, boardY) : handleChoosingMove(boardX, boardY);
 			}
 			// Click on NOT board or buttons -> empty space
 			else {
-				std::cout << "Clicked on empty space: " << x << " " << y << std::endl;
+				std::cout << "Clicked on empty space: " << gameState->x << " " << gameState->y << std::endl;
 			}
 			//return;
 		}
@@ -145,7 +140,7 @@ void GameManager::handleEvent() {
 void GameManager::handleClickOnBoard(int boardX, int boardY) {
 	gameState->clickedPiece = board->pieces[boardX][boardY];
 
-	if (!gameState->clickedPiece || gameState->clickedPiece->color != gameState->currentColor) {
+	if (!gameState->clickedPiece || gameState->clickedPiece->color != board->currentTurn) {
 		// If click to INVALID piece -> return to hear event again
 		std::cout << "Click on invalid piece [" << boardX << "][" << boardY << "]" << std::endl;
 		gameState->clickedPiece = nullptr;
@@ -159,12 +154,13 @@ void GameManager::handleClickOnBoard(int boardX, int boardY) {
 }
 
 void GameManager::handleChoosingMove(int newX, int newY) {
-	// If choose "legal" next move -> move -> return to handleEvent() -> other turn
+	// If choose "legal" next move -> move -> check -> return to handleEvent() -> other turn
 	if (gameState->clickedPiece->isLegalMove(newX, newY)) {
-		board->movePiece(gameState->clickedPiece, newX, newY);
-
-		if (gameState->clickedPiece->id == PieceID::Pawn && (newY == 0 || newY == 7)) { // Promotion
+		
+		// Promotion -> we  have to wait for promotion
+		if (board->movePiece(gameState->clickedPiece, newX, newY) == MoveID::Promotion) {
 			std::cout << "Promotion: [" << newX << "][" << newY << "]" << std::endl;
+			gameState->pX = newX; gameState->pY = newY;
 			gameState->state = State::PROMOTION;
 		}
 		else { // Normal legal move
@@ -200,18 +196,16 @@ void GameManager::handleClickButton(Button* clickedButton) {
 
 	case ButtonType::UNDO:
 		cout << "Clicked undo!" << endl;
-		
 		if (board->canUndo()) {
 			gameState->clickedPiece = nullptr;
-			if (gameState->matchResult) {
-				gameState->matchResult = 0;
-				player = (player1->color == board->currentTurn) ? player2 : player1;
+			if (gameState->matchResult != MatchResult::None) {
+				player = (player1->color == board->currentTurn) ? player1 : player2;
 			}
 			board->undo();
-			(player2->type == PlayerType::ComAI) ? board->undo() : changeTurn();
+			if (player2->type == PlayerType::ComAI) board->undo();
+			else changeTurn();
 			gui->setBoard(board);
 		}
-
 		break;
 
 	case ButtonType::REDO:
@@ -219,12 +213,11 @@ void GameManager::handleClickButton(Button* clickedButton) {
 
 		if (board->canRedo()) {
 			gameState->clickedPiece = nullptr;
-
 			board->redo();
-			(player2->type == PlayerType::ComAI) ? board->redo() : changeTurn();
+			if (player2->type == PlayerType::ComAI) board->redo();
+			else changeTurn();
 			gui->setBoard(board);
 		}
-
 		break;
 
 	case ButtonType::RESUME:
@@ -234,9 +227,8 @@ void GameManager::handleClickButton(Button* clickedButton) {
 		break;
 
 	case ButtonType::VOLUMN:
-		SDL_GetMouseState(&x, &y);
-		gameState->volumn = (x - clickedButton->posX) * 101.0 / clickedButton->width;
-		cout << "Clicked volumn: " << gameState->volumn << endl;
+		SDL_GetMouseState(&gameState->x, &gameState->y);
+		gameState->volumn = (gameState->x - gameState->clickedButton->posX) * 101.0 / gameState->clickedButton->width;
 		break;
 
 	case ButtonType::QUEEN:
@@ -246,10 +238,10 @@ void GameManager::handleClickButton(Button* clickedButton) {
 		cout << "Clicked Promotion!" << endl;
 		gameState->focusedButton = nullptr;
 		gameState->promotion = 1 + (clickedButton->type - ButtonType::QUEEN);
-		board->promotePawn(gameState->clickedPiece, gameState->promotion);
-		gameState->promotion = 0; gameState->clickedPiece = nullptr;
-		changeTurn();
+		board->promotePawn(gameState->clickedPiece, gameState->pX, gameState->pY, gameState->promotion);
+		gameState->promotion = 0; gameState->clickedPiece = nullptr; gameState->x = gameState->y = -1;
 		gameState->state = State::PLAYING;
+		changeTurn();
 		break;
 
 	// Other Buttons
@@ -284,7 +276,6 @@ void GameManager::handleClickButton(Button* clickedButton) {
 	case ButtonType::RESTART:
 		cout << "Restart game! " << endl;
 		delete board;
-		history.clear();
 		newGameBoard();
 		gameState->state = State::PLAYING;
 		break;
@@ -292,6 +283,7 @@ void GameManager::handleClickButton(Button* clickedButton) {
 	case ButtonType::LOAD:
 		cout << "Resume old games!" << endl;
 		try {
+			history.clear();
 			fs.open("match.fen", ios::in);
 			if (!fs.is_open()) throw "No old data!";
 			fs >> lineFEN[0];
@@ -311,6 +303,7 @@ void GameManager::handleClickButton(Button* clickedButton) {
 			cout << e << endl;
 		}
 		newGameBoard(history);
+		history.clear();
 		break;
 
 	case ButtonType::HUMAN:

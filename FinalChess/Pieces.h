@@ -12,6 +12,8 @@ enum class Color { White, Black, None };
 
 enum class PieceID { Pawn, Rook, Knight, Bishop, Queen, King };
 
+enum class MoveID { Match = -1, Move = 0, Kill = 1, Pawn1st = 2, EnPassant = 3, Promotion = 4, QCastle = 5, KCastle = 6 };
+
 class Piece {
 public:
 	int posX, posY;
@@ -32,15 +34,12 @@ public:
 
 	bool isLegalMove(int newX, int newY);
 	void addMove(int x, int y);
-	bool isBeingAttacked(const vector<vector<Piece*>>& pieces, Color allyColor, int targetX = -5, int targetY = -5) const;
+	bool isBeingAttacked(const vector<vector<Piece*>>& pieces, int posX = -1, int posY = -1) const;
 
 	bool thisMoveCanMakeChecked(vector<vector<Piece*>>& pieces, int newX, int newY);
 
-	void setDead();
-
-
 	virtual void updateTableMove(vector<vector<Piece*>>& pieces) = 0;
-	virtual bool move(vector<vector<Piece*>>& pieces, int newX, int newY);
+	virtual MoveID move(vector<vector<Piece*>>& pieces, int newX, int newY, bool isTrying = false);
 
 
 
@@ -53,7 +52,8 @@ public:
 	Rook(int _posX, int _posY, Color _color);
 	~Rook();
 	void updateTableMove(vector<vector<Piece*>>& pieces) override;
-	bool move(vector<vector<Piece*>>& pieces, int newX, int newY) override;
+	MoveID move(vector<vector<Piece*>>& pieces, int newX, int newY, bool isTrying = false);
+
 };
 
 // ---------------------------------
@@ -84,12 +84,16 @@ public:
 // ---------------------------------
 class King : public Piece {
 public:
-	bool canCastling = true;
+	bool castlingQ = true;
+	bool castlingK = true;
+
 	King(int _posX, int _posY, Color _color);
 	~King();
+
 	void updateTableMove(vector<vector<Piece*>>& pieces) override;
-	bool move(vector<vector<Piece*>>& pieces, int newX, int newY) override;
-	void addCastlingMove(vector<vector<Piece*>>& pieces);
+	MoveID move(vector<vector<Piece*>>& pieces, int newX, int newY, bool isTrying = false) override;
+	void addKingCastlingMove(vector<vector<Piece*>>& pieces);
+	void addQueenCastlingMove(vector<vector<Piece*>>& pieces);
 };
 
 // ---------------------------------
@@ -99,5 +103,5 @@ public:
 	Pawn(int _posX, int _posY, Color _color);
 	~Pawn();
 	void updateTableMove(vector<vector<Piece*>>& pieces) override;
-	bool move(vector<vector<Piece*>>& pieces, int newX, int newY) override;
+	MoveID move(vector<vector<Piece*>>& pieces, int newX, int newY, bool isTrying = false) override;
 };

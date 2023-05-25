@@ -185,7 +185,7 @@ void GuiManager::renderPlaying(GameState* gameState) {
 	drawBoard();
 	drawAllPieces();
 	
-	drawCurrentTurn(gameState->currentColor);
+	drawCurrentTurn(board->currentTurn);
 	
 	drawHighLight(gameState->clickedPiece);
 
@@ -281,23 +281,21 @@ void GuiManager::renderMatchResult(GameState* gameState) {
 	// Load from buffer
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, buffer, NULL, NULL);
-	SDL_Rect resBoard;
+
+	SDL_Rect resBoard = { 80, 170, 450, 260 };
 	SDL_Texture* winTexture = nullptr;
 
-	if (gameState->matchResult == 1) {
-		resBoard = { 80, 170, 450, 260 };
+	if (gameState->matchResult == MatchResult::WhiteWin) {
 		winTexture = whiteWinTexture;
 	}
-	else if (gameState->matchResult == -1) {
-		resBoard = { 80, 170, 450, 260 };
+	else if (gameState->matchResult == MatchResult::BlackWin) {
 		winTexture = blackWinTexture;
 	}
-	else {
-		throw string("I DON'T KNOW WHO WINS!");
+	else if (gameState->matchResult == MatchResult::Drawn) {
+		winTexture = boardTexture;
 	}
-
+	else throw string("I DON'T KNOW THIS MATCH RESULT!");
 	SDL_RenderCopy(renderer, winTexture, NULL, &resBoard);
-
 
 	// Buttons...
 	drawCircleButton(buttons[ButtonType::RESUME], gameState->focusedButton, false);
@@ -349,15 +347,15 @@ void GuiManager::drawHighLight(Piece* clickedPiece) {
 
 // ----------------------------------
 // Get specific button
-Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
+Button* GuiManager::getButton(GameState* gameState) const {
 	SDL_Rect btnRect;
 
 	switch (gameState->state) {
 	case State::MAIN_MENU:
 		for (int i = ButtonType::LOAD; i <= ButtonType::COM; i++)
 			if (buttons[i]
-				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
-				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
+				&& gameState->x > buttons[i]->posX && gameState->x < buttons[i]->posX + buttons[i]->width
+				&& gameState->y > buttons[i]->posY && gameState->y < buttons[i]->posY + buttons[i]->height)
 				return buttons[i];
 		return nullptr; // not implemented yet
 
@@ -367,32 +365,32 @@ Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
 	case State::PLAYING:
 		for (int i = ButtonType::SETTING; i <= ButtonType::REDO; i++) 
 			if (buttons[i] 
-				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
-				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
+				&& gameState->x > buttons[i]->posX && gameState->x < buttons[i]->posX + buttons[i]->width
+				&& gameState->y > buttons[i]->posY && gameState->y < buttons[i]->posY + buttons[i]->height)
 				return buttons[i];
 		return nullptr;
 
 	case State::SETTING_MENU: // Not enough
 		for (int i = ButtonType::VOLUMN; i <= ButtonType::RESUME; i++)
 			if (buttons[i]
-				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
-				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
+				&& gameState->x > buttons[i]->posX && gameState->x < buttons[i]->posX + buttons[i]->width
+				&& gameState->y > buttons[i]->posY && gameState->y < buttons[i]->posY + buttons[i]->height)
 				return buttons[i];
 		return nullptr;
 
 	case State::PROMOTION:
 		for (int i = ButtonType::RESUME; i <= ButtonType::ROOK; i++)
 			if (buttons[i]
-				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
-				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
+				&& gameState->x > buttons[i]->posX && gameState->x < buttons[i]->posX + buttons[i]->width
+				&& gameState->y > buttons[i]->posY && gameState->y < buttons[i]->posY + buttons[i]->height)
 				return buttons[i];
 		return nullptr;
 
 	case State::MATCH_RESULT:
 		for (int i = ButtonType::RESUME; i <= ButtonType::RESUME; i++)
 			if (buttons[i]
-				&& x > buttons[i]->posX && x < buttons[i]->posX + buttons[i]->width
-				&& y > buttons[i]->posY && y < buttons[i]->posY + buttons[i]->height)
+				&& gameState->x > buttons[i]->posX && gameState->x < buttons[i]->posX + buttons[i]->width
+				&& gameState->y > buttons[i]->posY && gameState->y < buttons[i]->posY + buttons[i]->height)
 				return buttons[i];
 		return nullptr;
 
@@ -402,10 +400,10 @@ Button* GuiManager::getButton(GameState* gameState, int x, int y) const {
 
 }
 
-bool GuiManager::isOnBoard(int x, int y) const {
-	int boardX = (x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
-	int boardY = (y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
-	return (x - BOARD_OFFSET - BOARD_BORDER >= 0 && y - BOARD_OFFSET - BOARD_BORDER >= 0
+bool GuiManager::mouseIsOnBoard(GameState* gameState) const {
+	int boardX = (gameState->x - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+	int boardY = (gameState->y - BOARD_OFFSET - BOARD_BORDER) / CELL_SIZE;
+	return (gameState->x - BOARD_OFFSET - BOARD_BORDER >= 0 && gameState->y - BOARD_OFFSET - BOARD_BORDER >= 0
 		&& boardX >= 0 && boardX <= 7 && boardY >= 0 && boardY <= 7);
 }
 

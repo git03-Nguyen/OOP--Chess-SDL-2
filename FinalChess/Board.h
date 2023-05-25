@@ -6,6 +6,8 @@
 
 #include "Pieces.h"
 
+enum class MatchResult { Drawn, WhiteWin, BlackWin, None };
+
 class Board {
 private:
 	void parseFEN(const char* fen);
@@ -23,14 +25,15 @@ public:
 	Color currentTurn;
 	int halfMoveClock;
 	int fullMoveClock;
+	int enPassantX = -1, enPassantY = -1;
 
 	Board(vector<string> history);
 	~Board();
 	
-	bool movePiece(Piece* piece, int newX, int newY);
+	MoveID movePiece(Piece* piece, int newX, int newY);
+	MoveID promotePawn(Piece* pawn, int newX, int newY, int choice);
 	void updateTableMoves();
-	void promotePawn(Piece* pawn, int choice);
-	int checkWinLose() const;
+	MatchResult getMatchResult() const;
 
 	bool canUndo() const;
 	bool canRedo() const;
