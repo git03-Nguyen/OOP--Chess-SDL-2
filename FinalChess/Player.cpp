@@ -263,10 +263,19 @@ void ComAI::makeRandomMove(Board* board) const {
 		newX = (newX + 1) % availPiece[chosen]->tableMove.size();
 	}
 	newY = newX + 1;
-	if (board->movePiece(availPiece[chosen], availPiece[chosen]->tableMove[newX], availPiece[chosen]->tableMove[newY]) == MoveID::Promotion) {
-		// If 3 then promotion
+
+	MoveID type = board->movePiece(availPiece[chosen], availPiece[chosen]->tableMove[newX], availPiece[chosen]->tableMove[newY]);
+	if (type == MoveID::Promotion) {
+		// Random for promotion
 		int choice = rand() % 5 + 1;
 		board->promotePawn(availPiece[chosen], availPiece[chosen]->tableMove[newX], availPiece[chosen]->tableMove[newY], choice);
+		cout << "Random.AI have just promoted a pawn!" << endl;
+	}
+	else if (type == MoveID::KCastle || type == MoveID::QCastle) {
+		cout << "Random.AI have just casling!" << endl;
+	}
+	else if (type == MoveID::EnPassant) {
+		cout << "Random.AI have just en passant!" << endl;
 	}
 
 	std::cout << "Random.AI moved to [" << availPiece[chosen]->posX << "][" << availPiece[chosen]->posY << "]" << endl;
@@ -277,16 +286,27 @@ void ComAI::makeHardMove(Board* board) {
 	Piece* bestPiece = nullptr;
 	int bestX = 0, bestY = 0;
 
-	getBestMove(bestPiece, bestX, bestY, board, 3);
+	int depth = 3;
+	getBestMove(bestPiece, bestX, bestY, board, depth);
 
 	if (bestPiece) {
-		board->movePiece(bestPiece, bestX, bestY);
-		std::cout << "Hard.AI moved to [" << bestX << "][" << bestY << "]" << endl;	
+		MoveID type = board->movePiece(bestPiece, bestX, bestY);
+		if (type == MoveID::Promotion) {
+			// Choose the best for promotion
+			cout << "Hard.AI have just promoted a pawn!" << endl;
+		}
+		else if (type == MoveID::KCastle || type == MoveID::QCastle) {
+			cout << "Hard.AI have just casling!" << endl;
+		}
+		else if (type == MoveID::EnPassant) {
+			cout << "Hard.AI have just en passant!" << endl;
+		}
+		cout << "Hard.AI moved to [" << bestX << "][" << bestY << "]" << endl;	
 	}
 	else {
-		throw string("AI error!");
+		throw string("AI cannot find the best piece to move!");
 	}
-	std::cout << "Evaluation: " << evaluate(board) << endl;
+	std::cout << "Current evaluation: " << evaluate(board) << endl;
 }
 
 Player::Player(Color _color): color(_color) {
